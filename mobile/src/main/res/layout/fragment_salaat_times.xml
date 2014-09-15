@@ -1,0 +1,131 @@
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentStart="true"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentRight="true"
+    android:layout_alignParentEnd="true"
+    android:layout_alignParentBottom="true"
+    android:background="@color/gray"
+    android:stretchColumns="2"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".SalaatTimes$PlaceholderFragment">
+    <TableRow>
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:id="@+id/imsaak_label"
+            android:layout_column="1"
+            android:text="@string/imsaak"
+            android:padding="3dip" />
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:id="@+id/imsaak_value"
+            android:text="00:00"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:id="@+id/fajr_label"
+            android:layout_column="1"
+            android:text="@string/fajr"
+            android:padding="3dip" />
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:id="@+id/fajr_value"
+            android:text="00:00"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:id="@+id/sunrise_label"
+            android:layout_column="1"
+            android:text="@string/sunrise"
+            android:padding="3dip" />
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:id="@+id/sunrise_value"
+            android:text="00:00"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:layout_column="1"
+            android:id="@+id/zohr_label"
+            android:text="@string/zohr"
+            android:padding="3dip" />
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:text="00:00"
+            android:id="@+id/zohr_value"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:layout_column="1"
+            android:id="@+id/sunset_label"
+            android:text="@string/sunset"
+            android:padding="3dip" />
+        <TextView
+            android:id="@+id/sunset_value"
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:text="00:00"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:id="@+id/maghrib_label"
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:layout_column="1"
+            android:text="@string/maghrib"
+            android:padding="3dip" />
+        <TextView
+            android:id="@+id/maghrib_value"
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:text="00:00"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:id="@+id/tomorrowfajr_label"
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:layout_column="1"
+            android:text="@string/tomorrowfajr"
+            android:padding="3dip" />
+        <TextView
+            android:id="@+id/tomorrowfajr_value"
+            android:textSize="32sp"
+            android:textColor="@color/white"
+            android:text="00:00"
+            android:gravity="right"
+            android:padding="3dip" />
+    </TableRow>
+
+</TableLayout>
