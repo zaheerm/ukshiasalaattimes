@@ -2,6 +2,7 @@ package com.azam.android.salaattimes;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -14,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -84,6 +86,16 @@ public class SalaatTimes extends Activity {
             case R.id.action_peterborough:
                 city = "Peterborough";
                 break;
+            case R.id.action_choosedate:
+                new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        // Do something here
+                        currentDay.set(year, monthOfYear, dayOfMonth);
+                        changeDay(currentDay);
+                    }
+                }, currentDay.get(Calendar.YEAR), currentDay.get(Calendar.MONTH), currentDay.get(Calendar.DAY_OF_MONTH)).show();
             default:
                 citySelected = false;
         }

@@ -14,5 +14,6 @@
     <string name="action_london">London</string>
     <string name="action_birmingham">Birmingham</string>
     <string name="action_peterborough">Peterborough</string>
+    <string name="action_choosedate">Choose date</string>
 
 </resources>
