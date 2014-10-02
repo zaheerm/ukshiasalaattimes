@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
@@ -232,6 +233,7 @@ public class SalaatTimes extends Activity {
                 t.setTextColor(getResources().getColor(R.color.green));
             }
         }
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
@@ -251,6 +253,19 @@ public class SalaatTimes extends Activity {
                     SalaatTimes activity = (SalaatTimes)getActivity();
                     day.add(Calendar.DAY_OF_MONTH, -1);
                     activity.changeDay(day);
+                }
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        rootView.findViewById(R.id.showLeft).setVisibility(View.VISIBLE);
+                        rootView.findViewById(R.id.showRight).setVisibility(View.VISIBLE);
+                    }
+                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        rootView.findViewById(R.id.showLeft).setVisibility(View.INVISIBLE);
+                        rootView.findViewById(R.id.showRight).setVisibility(View.INVISIBLE);
+                    }
+                    return super.onTouch(v, event);
                 }
 
             });

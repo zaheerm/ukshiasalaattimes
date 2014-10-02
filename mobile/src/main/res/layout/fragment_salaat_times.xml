@@ -128,4 +128,26 @@
             android:padding="3dip" />
     </TableRow>
 
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:id="@+id/showLeft"
+            android:src="@drawable/ic_action_previous_item"
+            android:layout_alignParentLeft="true"
+            android:visibility="invisible" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:id="@+id/showRight"
+            android:src="@drawable/ic_action_next_item"
+            android:layout_alignParentRight="true"
+            android:visibility="invisible" />
+
+
+    </RelativeLayout>
+
 </TableLayout>
