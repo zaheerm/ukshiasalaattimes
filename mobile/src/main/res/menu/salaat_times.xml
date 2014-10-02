@@ -1,8 +1,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".SalaatTimes" >
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never" />
+    <group android:id="@+id/menu_city"
+        android:checkableBehavior="single">
+        <item android:id="@+id/action_london"
+            android:title="@string/action_london" />
+        <item android:id="@+id/action_birmingham"
+            android:title="@string/action_birmingham" />
+        <item android:id="@+id/action_peterborough"
+            android:title="@string/action_peterborough" />
+
+    </group>
 </menu>

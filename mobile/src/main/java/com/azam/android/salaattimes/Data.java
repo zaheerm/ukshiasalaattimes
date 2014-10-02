@@ -16,13 +16,13 @@ public class Data {
     public Data(SQLiteOpenHelper openHelper) {
         this.openHelper = openHelper;
     }
-    public Entry getEntry(Calendar day) {
+    public Entry getEntry(Calendar day, String city) {
         TimeZone tz = TimeZone.getTimeZone("Europe/London");
         Log.i("sqlitedata", "day is " + day.get(Calendar.DAY_OF_MONTH) + " month is " + day.get(Calendar.MONTH));
         SQLiteDatabase db = openHelper.getReadableDatabase();
         String month = String.valueOf(day.get(Calendar.MONTH) + 1);
         String dom = String.valueOf(day.get(Calendar.DAY_OF_MONTH));
-        String query = "SELECT imsaak, fajr, sunrise, zohr, sunset, maghrib, tomorrowfajr from salaat_times WHERE city='London' AND month=" + month + " AND day=" + dom;
+        String query = "SELECT imsaak, fajr, sunrise, zohr, sunset, maghrib, tomorrowfajr from salaat_times WHERE city='" + city + "' AND month=" + month + " AND day=" + dom;
         Log.i("sqlitedata", query);
         Cursor c = db.rawQuery(query, new String[]{});
         c.moveToFirst();

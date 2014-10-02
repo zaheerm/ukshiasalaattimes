@@ -11,5 +11,8 @@
     <string name="sunset">Sunset</string>
     <string name="maghrib">Maghrib</string>
     <string name="tomorrowfajr">Tomorrow Fajr</string>
+    <string name="action_london">London</string>
+    <string name="action_birmingham">Birmingham</string>
+    <string name="action_peterborough">Peterborough</string>
 
 </resources>

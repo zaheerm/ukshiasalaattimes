@@ -3,9 +3,12 @@ package com.azam.android.salaattimes;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.SQLException;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,25 +23,49 @@ import java.util.Calendar;
 
 public class SalaatTimes extends Activity {
 
+    private String city;
+    private Calendar currentDay;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_salaat_times);
+        SharedPreferences preferences = getPreferences(0);
+
+        city = preferences.getString("city", "London");
+        currentDay = Calendar.getInstance();
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
+                    .add(R.id.container, new SalaatTimeFragment(Calendar.getInstance(), city))
                     .commit();
         }
-
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        SharedPreferences preferences = getPreferences(0);
+        SharedPreferences.Editor editor = preferences.edit();
+        Log.i("salaattimes", "Storing " + city + " as preferred city");
+        editor.putString("city", city);
+        editor.commit();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.salaat_times, menu);
+        MenuItem item = null;
+        if (city.equals("London"))
+            item = menu.findItem(R.id.action_london);
+        else if (city.equals("Birmingham"))
+            item = menu.findItem(R.id.action_birmingham);
+        else if (city.equals("Peterborough"))
+            item = menu.findItem(R.id.action_peterborough);
+        if (item == null) Log.i("SalaatTimes", "Did not find menu item");
+        else item.setChecked(true);
         return true;
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -46,22 +73,59 @@ public class SalaatTimes extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        boolean citySelected = true;
+        switch (id) {
+            case R.id.action_london:
+                city = "London";
+                break;
+            case R.id.action_birmingham:
+                city = "Birmingham";
+                break;
+            case R.id.action_peterborough:
+                city = "Peterborough";
+                break;
+            default:
+                citySelected = false;
+        }
+        if (citySelected) {
+            Log.i("SalaatTimesActivity", "City chosen " + city);
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+            ft.replace(R.id.container, new SalaatTimeFragment(currentDay, city));
+            ft.commit();
+            item.setChecked(true);
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
+    public void changeDay(Calendar day) {
+        currentDay = day;
+        Log.i("SalaatTimesActivity", "Date changed");
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+
+        ft.replace(R.id.container, new SalaatTimeFragment(currentDay, city));
+        ft.commit();
+
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class SalaatTimeFragment extends Fragment {
 
         private Calendar day;
-        public PlaceholderFragment() {
-            day = Calendar.getInstance();
+        private String city;
+        public SalaatTimeFragment(Calendar day, String city) {
+            this.day = day;
+            this.city = city;
         }
 
+        public SalaatTimeFragment() {
+            day = Calendar.getInstance();
+            this.city = city;
+        }
         private void resetColors(View rootView) {
             for(int viewId : new int[]{
                     R.id.imsaak_value,
@@ -84,7 +148,7 @@ public class SalaatTimes extends Activity {
                 t.setTextColor(getResources().getColor(R.color.white));
             }
         }
-        private void setDate(Calendar day, View rootView) {
+        private void setDate(View rootView) {
             resetColors(rootView);
             DatabaseHelper myDbHelper = new DatabaseHelper(rootView.getContext());
             try {
@@ -99,7 +163,8 @@ public class SalaatTimes extends Activity {
                 throw sqle;
             }
             Data data = new Data(myDbHelper);
-            Entry entry = data.getEntry(day);
+            SalaatTimes activity = (SalaatTimes)getActivity();
+            Entry entry = data.getEntry(day, city);
             for(int viewId : new int[]{
                     R.id.imsaak_value,
                     R.id.fajr_value,
@@ -117,7 +182,7 @@ public class SalaatTimes extends Activity {
                 }
             }
             ActionBar actionBar = getActivity().getActionBar();
-            actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()));
+            actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
             Calendar now = Calendar.getInstance();
             if (day.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
                     day.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
@@ -160,18 +225,20 @@ public class SalaatTimes extends Activity {
                 Bundle savedInstanceState) {
             final View rootView = inflater.inflate(R.layout.fragment_salaat_times, container, false);
             Context c = rootView.getContext();
-            setDate(day, rootView);
+            setDate(rootView);
             rootView.setOnTouchListener(new OnSwipeTouchListener(c) {
                 @Override
                 public void onSwipeLeft() {
-                   day.add(Calendar.DAY_OF_MONTH, 1);
-                   setDate(day, rootView);
+                    SalaatTimes activity = (SalaatTimes)getActivity();
+                    day.add(Calendar.DAY_OF_MONTH, 1);
+                    activity.changeDay(day);
                 }
 
                 @Override
                 public void onSwipeRight() {
+                    SalaatTimes activity = (SalaatTimes)getActivity();
                     day.add(Calendar.DAY_OF_MONTH, -1);
-                    setDate(day, rootView);
+                    activity.changeDay(day);
                 }
 
             });

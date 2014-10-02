@@ -47,7 +47,8 @@ public class Entry {
         String[] time_split = time.split(":");
         int hour = Integer.valueOf(time_split[0]).intValue();
         if (dst) hour = hour + 1;
-        return String.valueOf(hour) + ":" + time_split[1];
+        String hour_str = (hour < 10) ? "0" + String.valueOf(hour) : String.valueOf(hour);
+        return hour_str + ":" + time_split[1];
     }
 
     private String imsaak;
