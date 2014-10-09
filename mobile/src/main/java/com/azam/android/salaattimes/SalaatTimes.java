@@ -7,7 +7,6 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.SQLException;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,9 +18,9 @@ import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 
 public class SalaatTimes extends Activity {
@@ -31,8 +30,9 @@ public class SalaatTimes extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        NotificationPublisher.cancel(this);
         setContentView(R.layout.activity_salaat_times);
-        SharedPreferences preferences = getPreferences(0);
+        SharedPreferences preferences = getSharedPreferences("salaat", 0);
 
         city = preferences.getString("city", "London");
         currentDay = Calendar.getInstance();
@@ -41,12 +41,18 @@ public class SalaatTimes extends Activity {
                     .add(R.id.container, new SalaatTimeFragment(Calendar.getInstance(), city))
                     .commit();
         }
+        Log.i("salaattimes", "About to schedule next salaat");
+        Data data = Data.getData(this);
+        data.scheduleNextSalaatNotification(this);
+        data.close();
+        Log.i("salaattimes", "Finished scheduling next salaat");
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        SharedPreferences preferences = getPreferences(0);
+        SharedPreferences preferences = getSharedPreferences("salaat", 0);
         SharedPreferences.Editor editor = preferences.edit();
         Log.i("salaattimes", "Storing " + city + " as preferred city");
         editor.putString("city", city);
@@ -112,9 +118,10 @@ public class SalaatTimes extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+
     public void changeDay(Calendar day) {
         currentDay = day;
-        Log.i("SalaatTimesActivity", "Date changed");
+        Log.i("salaattimes", "Date changed");
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
 
@@ -137,7 +144,7 @@ public class SalaatTimes extends Activity {
 
         public SalaatTimeFragment() {
             day = Calendar.getInstance();
-            this.city = city;
+            this.city = "London";
         }
         private void resetColors(View rootView) {
             for(int viewId : new int[]{
@@ -163,21 +170,9 @@ public class SalaatTimes extends Activity {
         }
         private void setDate(View rootView) {
             resetColors(rootView);
-            DatabaseHelper myDbHelper = new DatabaseHelper(rootView.getContext());
-            try {
-                myDbHelper.createDataBase();
-            } catch (IOException ioe) {
-                throw new Error("Unable to create database");
-            }
-
-            try {
-                myDbHelper.openDataBase();
-            }catch(SQLException sqle){
-                throw sqle;
-            }
-            Data data = new Data(myDbHelper);
-            SalaatTimes activity = (SalaatTimes)getActivity();
+            Data data = Data.getData(getActivity());
             Entry entry = data.getEntry(day, city);
+            data.close();
             for(int viewId : new int[]{
                     R.id.imsaak_value,
                     R.id.fajr_value,
@@ -214,19 +209,25 @@ public class SalaatTimes extends Activity {
             }) {
                 try {
                     String salaatTime = entry.getSalaat(viewId);
-                    String[] time_split = salaatTime.split(" ");
+                    String[] time_split = salaatTime.split(":");
                     int hour = Integer.valueOf(time_split[0]);
                     int minute = Integer.valueOf(time_split[1]);
                     Calendar salaat = (Calendar)now.clone();
-                    salaat.set(Calendar.HOUR, hour);
+                    salaat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+                    salaat.set(Calendar.HOUR_OF_DAY, hour);
                     salaat.set(Calendar.MINUTE, minute);
+                    salaat.set(Calendar.SECOND, 0);
+                    salaat.set(Calendar.MILLISECOND, 0);
+                    Log.i("salaattimes", "Comparing " + salaat.toString() + " to " + now.toString());
                     if (now.compareTo(salaat) < 0) {
                         TextView t = (TextView)rootView.findViewById(viewId);
                         t.setTextColor(getResources().getColor(R.color.green));
                         found = true;
                         break;
                     }
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    Log.i("salaattimes", "Got exception " + e.toString());
+                }
             }
             if (!found) {
                 TextView t = (TextView)rootView.findViewById(R.id.tomorrowfajr_value);
