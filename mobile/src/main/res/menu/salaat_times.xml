@@ -15,4 +15,7 @@
             android:title="@string/action_peterborough" />
 
     </group>
+    <item android:id="@+id/action_notifications"
+        android:title="Salaat Reminder"
+        android:checkable="true" />
 </menu>

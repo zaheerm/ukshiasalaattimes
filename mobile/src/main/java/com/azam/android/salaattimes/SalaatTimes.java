@@ -20,13 +20,13 @@ import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.TimeZone;
 
 
 public class SalaatTimes extends Activity {
 
     private String city;
     private Calendar currentDay;
+    private boolean nextSalaatNotify;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,18 +35,20 @@ public class SalaatTimes extends Activity {
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
 
         city = preferences.getString("city", "London");
+        nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
         currentDay = Calendar.getInstance();
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
                     .add(R.id.container, new SalaatTimeFragment(Calendar.getInstance(), city))
                     .commit();
         }
-        Log.i("salaattimes", "About to schedule next salaat");
-        Data data = Data.getData(this);
-        data.scheduleNextSalaatNotification(this);
-        data.close();
-        Log.i("salaattimes", "Finished scheduling next salaat");
-
+        if (nextSalaatNotify) {
+            Log.i("salaattimes", "About to schedule next salaat");
+            Data data = Data.getData(this);
+            data.scheduleNextSalaatNotification(this);
+            data.close();
+            Log.i("salaattimes", "Finished scheduling next salaat");
+        }
     }
 
     @Override
@@ -70,8 +72,11 @@ public class SalaatTimes extends Activity {
             item = menu.findItem(R.id.action_birmingham);
         else if (city.equals("Peterborough"))
             item = menu.findItem(R.id.action_peterborough);
-        if (item == null) Log.i("SalaatTimes", "Did not find menu item");
+        if (item == null) Log.w("SalaatTimes", "Did not find menu item");
         else item.setChecked(true);
+
+        item = menu.findItem(R.id.action_notifications);
+        item.setChecked(nextSalaatNotify);
         return true;
     }
 
@@ -103,6 +108,16 @@ public class SalaatTimes extends Activity {
                         changeDay(currentDay);
                     }
                 }, currentDay.get(Calendar.YEAR), currentDay.get(Calendar.MONTH), currentDay.get(Calendar.DAY_OF_MONTH)).show();
+                citySelected = false;
+                break;
+            case R.id.action_notifications:
+                item.setChecked(!item.isChecked());
+                nextSalaatNotify = item.isChecked();
+                if (!nextSalaatNotify) {
+                    Data.cancelNextSalaatNotification(this);
+                }
+                citySelected = false;
+                break;
             default:
                 citySelected = false;
         }
@@ -172,6 +187,7 @@ public class SalaatTimes extends Activity {
             resetColors(rootView);
             Data data = Data.getData(getActivity());
             Entry entry = data.getEntry(day, city);
+            Salaat nextSalaat = data.getNextSalaat(getActivity());
             data.close();
             for(int viewId : new int[]{
                     R.id.imsaak_value,
@@ -195,44 +211,13 @@ public class SalaatTimes extends Activity {
             if (day.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
                     day.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
                     day.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH)) {
-                highlightNextSalaat(rootView, entry);
+                highlightNextSalaat(rootView, nextSalaat);
             }
         }
 
-        private void highlightNextSalaat(View rootView, Entry entry) {
-            Calendar now = Calendar.getInstance();
-            boolean found = false;
-            for(int viewId : new int[]{
-                    R.id.fajr_value,
-                    R.id.zohr_value,
-                    R.id.maghrib_value,
-            }) {
-                try {
-                    String salaatTime = entry.getSalaat(viewId);
-                    String[] time_split = salaatTime.split(":");
-                    int hour = Integer.valueOf(time_split[0]);
-                    int minute = Integer.valueOf(time_split[1]);
-                    Calendar salaat = (Calendar)now.clone();
-                    salaat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
-                    salaat.set(Calendar.HOUR_OF_DAY, hour);
-                    salaat.set(Calendar.MINUTE, minute);
-                    salaat.set(Calendar.SECOND, 0);
-                    salaat.set(Calendar.MILLISECOND, 0);
-                    Log.i("salaattimes", "Comparing " + salaat.toString() + " to " + now.toString());
-                    if (now.compareTo(salaat) < 0) {
-                        TextView t = (TextView)rootView.findViewById(viewId);
-                        t.setTextColor(getResources().getColor(R.color.green));
-                        found = true;
-                        break;
-                    }
-                } catch (Exception e) {
-                    Log.i("salaattimes", "Got exception " + e.toString());
-                }
-            }
-            if (!found) {
-                TextView t = (TextView)rootView.findViewById(R.id.tomorrowfajr_value);
-                t.setTextColor(getResources().getColor(R.color.green));
-            }
+        private void highlightNextSalaat(View rootView, Salaat nextSalaat) {
+            TextView t = (TextView)rootView.findViewById(nextSalaat.getLabel());
+            t.setTextColor(getResources().getColor(R.color.green));
         }
 
         @Override

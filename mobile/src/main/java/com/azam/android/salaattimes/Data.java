@@ -47,12 +47,11 @@ public class Data {
 
     public Entry getEntry(Calendar day, String city) {
         TimeZone tz = TimeZone.getTimeZone("Europe/London");
-        Log.i("sqlitedata", "day is " + day.get(Calendar.DAY_OF_MONTH) + " month is " + day.get(Calendar.MONTH));
+        Log.d("sqlitedata", "day is " + day.get(Calendar.DAY_OF_MONTH) + " month is " + day.get(Calendar.MONTH));
         SQLiteDatabase db = openHelper.getReadableDatabase();
         String month = String.valueOf(day.get(Calendar.MONTH) + 1);
         String dom = String.valueOf(day.get(Calendar.DAY_OF_MONTH));
         String query = "SELECT imsaak, fajr, sunrise, zohr, sunset, maghrib, tomorrowfajr from salaat_times WHERE city='" + city + "' AND month=" + month + " AND day=" + dom;
-        Log.i("sqlitedata", query);
         Cursor c = db.rawQuery(query, new String[]{});
         c.moveToFirst();
         Calendar tomorrow = (Calendar)day.clone();
@@ -91,6 +90,15 @@ public class Data {
 
     }
 
+    public static void cancelNextSalaatNotification(Context context) {
+        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Log.i("sqldata", "Cancelling next salaat notification");
+        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        alarmManager.cancel(pendingIntent);
+    }
+
     public Salaat getNextSalaat(Context context) {
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         String city = preferences.getString("city", "London");
@@ -115,9 +123,9 @@ public class Data {
                 salaat.set(Calendar.SECOND, 0);
                 salaat.set(Calendar.MILLISECOND, 0);
 
-                Log.i("salaattimes_data", "Comparing " + salaat.toString() + " to " + now.toString());
+                Log.d("salaattimes_data", "Comparing " + salaat.toString() + " to " + now.toString());
                 if (now.compareTo(salaat) < 0) {
-                    Log.i("salaattimes_data", "Salaat " + String.valueOf(viewId) + " is after now");
+                    Log.d("salaattimes_data", "Salaat " + String.valueOf(viewId) + " is after now");
                     found = true;
                     switch (viewId) {
                         case R.id.fajr_value:
@@ -132,7 +140,7 @@ public class Data {
                     break;
                 }
             } catch (Exception e) {
-                Log.i("salaattimes_data", "Got exception " + e.toString());
+                Log.w("salaattimes_data", "Got exception " + e.toString());
             }
         }
         if (!found) {
@@ -146,7 +154,7 @@ public class Data {
                 salaat.set(Calendar.MINUTE, minute);
                 salaat.set(Calendar.SECOND, 0);
                 salaat.set(Calendar.MILLISECOND, 0);
-                Log.i("salaattimes_data", "No salaat today is after now");
+                Log.w("salaattimes_data", "No salaat today is after now");
                 salaatName = "Fajr";
             } catch (Exception e) {}
 

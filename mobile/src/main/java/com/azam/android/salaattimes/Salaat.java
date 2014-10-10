@@ -21,4 +21,19 @@ public class Salaat {
         this.salaatName = salaatName;
         this.salaatTime = salaatTime;
     }
+
+    public int getLabel() {
+        if (salaatName.equals("Fajr")) {
+            Calendar now = Calendar.getInstance();
+            if (now.get(Calendar.DAY_OF_MONTH) == salaatTime.get(Calendar.DAY_OF_MONTH)) {
+                return R.id.fajr_value;
+            }
+            else {
+                return R.id.tomorrowfajr_value;
+            }
+        }
+        if (salaatName.equals("Zohr")) return R.id.zohr_value;
+        if (salaatName.equals("Maghrib")) return R.id.maghrib_value;
+        return 0;
+    }
 }
