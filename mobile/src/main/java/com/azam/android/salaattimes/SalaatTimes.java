@@ -24,48 +24,51 @@ import java.util.Calendar;
 
 public class SalaatTimes extends Activity {
 
-    private String city;
     private Calendar currentDay;
-    private boolean nextSalaatNotify;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        NotificationPublisher.cancel(this);
         setContentView(R.layout.activity_salaat_times);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        NotificationPublisher.cancel(this);
+        currentDay = Calendar.getInstance();
+        getFragmentManager().beginTransaction()
+                .replace(R.id.container, SalaatTimeFragment.newInstance(Calendar.getInstance(), getCity()))
+                .commit();
+        scheduleNotification();
+
+    }
+
+    private String getCity() {
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
 
-        city = preferences.getString("city", "London");
-        nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
-        currentDay = Calendar.getInstance();
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new SalaatTimeFragment(Calendar.getInstance(), city))
-                    .commit();
-        }
-        if (nextSalaatNotify) {
-            Log.i("salaattimes", "About to schedule next salaat");
-            Data data = Data.getData(this);
-            data.scheduleNextSalaatNotification(this);
-            data.close();
-            Log.i("salaattimes", "Finished scheduling next salaat");
-        }
+        return preferences.getString("city", "London");
+    }
+
+    private void scheduleNotification() {
+        Data data = Data.getData(this);
+        data.scheduleNextSalaatNotification(this);
+        data.close();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        SharedPreferences preferences = getSharedPreferences("salaat", 0);
-        SharedPreferences.Editor editor = preferences.edit();
-        Log.i("salaattimes", "Storing " + city + " as preferred city");
-        editor.putString("city", city);
-        editor.commit();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.salaat_times, menu);
+        SharedPreferences preferences = getSharedPreferences("salaat", 0);
+        boolean nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
+
         MenuItem item = null;
+        String city = getCity();
         if (city.equals("London"))
             item = menu.findItem(R.id.action_london);
         else if (city.equals("Birmingham"))
@@ -88,6 +91,7 @@ public class SalaatTimes extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         boolean citySelected = true;
+        String city = null;
         switch (id) {
             case R.id.action_london:
                 city = "London";
@@ -112,9 +116,13 @@ public class SalaatTimes extends Activity {
                 break;
             case R.id.action_notifications:
                 item.setChecked(!item.isChecked());
-                nextSalaatNotify = item.isChecked();
+                SharedPreferences preferences = getSharedPreferences("salaat", 0);
+                boolean nextSalaatNotify = item.isChecked();
+                preferences.edit().putBoolean("nextsalaatnotify", nextSalaatNotify).commit();
                 if (!nextSalaatNotify) {
                     Data.cancelNextSalaatNotification(this);
+                } else {
+                    scheduleNotification();
                 }
                 citySelected = false;
                 break;
@@ -122,12 +130,15 @@ public class SalaatTimes extends Activity {
                 citySelected = false;
         }
         if (citySelected) {
+            SharedPreferences preferences = getSharedPreferences("salaat", 0);
+            preferences.edit().putString("city", city).commit();
             Log.i("SalaatTimesActivity", "City chosen " + city);
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            ft.replace(R.id.container, new SalaatTimeFragment(currentDay, city));
+            ft.replace(R.id.container, SalaatTimeFragment.newInstance(currentDay, city));
             ft.commit();
             item.setChecked(true);
+            scheduleNotification();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -139,8 +150,7 @@ public class SalaatTimes extends Activity {
         Log.i("salaattimes", "Date changed");
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-
-        ft.replace(R.id.container, new SalaatTimeFragment(currentDay, city));
+        ft.replace(R.id.container, SalaatTimeFragment.newInstance(day, getCity()));
         ft.commit();
 
     }
@@ -150,17 +160,17 @@ public class SalaatTimes extends Activity {
      */
     public static class SalaatTimeFragment extends Fragment {
 
-        private Calendar day;
-        private String city;
-        public SalaatTimeFragment(Calendar day, String city) {
-            this.day = day;
-            this.city = city;
+        public static SalaatTimeFragment newInstance(Calendar day, String city) {
+            SalaatTimeFragment fragment = new SalaatTimeFragment();
+            Bundle args = new Bundle();
+            args.putInt("year", day.get(Calendar.YEAR));
+            args.putInt("month", day.get(Calendar.MONTH));
+            args.putInt("day", day.get(Calendar.DAY_OF_MONTH));
+            args.putString("city", city);
+            fragment.setArguments(args);
+            return fragment;
         }
 
-        public SalaatTimeFragment() {
-            day = Calendar.getInstance();
-            this.city = "London";
-        }
         private void resetColors(View rootView) {
             for(int viewId : new int[]{
                     R.id.imsaak_value,
@@ -183,11 +193,28 @@ public class SalaatTimes extends Activity {
                 t.setTextColor(getResources().getColor(R.color.white));
             }
         }
+
+        private Calendar getCalendar() {
+            Bundle args = getArguments();
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.YEAR, args.getInt("year"));
+            cal.set(Calendar.MONTH, args.getInt("month"));
+            cal.set(Calendar.DAY_OF_MONTH, args.getInt("day"));
+            return cal;
+        }
+
+        private String getCity() {
+            return getArguments().getString("city");
+        }
+
         private void setDate(View rootView) {
             resetColors(rootView);
             Data data = Data.getData(getActivity());
+            Calendar day = getCalendar();
+            String city = getCity();
+
             Entry entry = data.getEntry(day, city);
-            Salaat nextSalaat = data.getNextSalaat(getActivity());
+            Salaat nextSalaat = data.getNextSalaat(getActivity(), Calendar.getInstance());
             data.close();
             for(int viewId : new int[]{
                     R.id.imsaak_value,
@@ -216,8 +243,10 @@ public class SalaatTimes extends Activity {
         }
 
         private void highlightNextSalaat(View rootView, Salaat nextSalaat) {
-            TextView t = (TextView)rootView.findViewById(nextSalaat.getLabel());
-            t.setTextColor(getResources().getColor(R.color.green));
+            if (nextSalaat != null) {
+                TextView t = (TextView) rootView.findViewById(nextSalaat.getLabel());
+                t.setTextColor(getResources().getColor(R.color.green));
+            }
         }
 
         @Override
@@ -230,6 +259,7 @@ public class SalaatTimes extends Activity {
                 @Override
                 public void onSwipeLeft() {
                     SalaatTimes activity = (SalaatTimes)getActivity();
+                    Calendar day = getCalendar();
                     day.add(Calendar.DAY_OF_MONTH, 1);
                     activity.changeDay(day);
                 }
@@ -237,6 +267,7 @@ public class SalaatTimes extends Activity {
                 @Override
                 public void onSwipeRight() {
                     SalaatTimes activity = (SalaatTimes)getActivity();
+                    Calendar day = getCalendar();
                     day.add(Calendar.DAY_OF_MONTH, -1);
                     activity.changeDay(day);
                 }

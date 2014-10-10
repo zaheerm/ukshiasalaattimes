@@ -78,16 +78,24 @@ public class Data {
     }
 
     public void scheduleNextSalaatNotification(Context context) {
-        Salaat nextSalaat = getNextSalaat(context);
-        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
-        notificationIntent.putExtra(SALAAT_NAME, nextSalaat.getSalaatName());
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
+        boolean nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
 
-        long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
-        Log.i("sqldata", "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
-        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+        if (nextSalaatNotify) {
+            Log.i("sqldata", "About to schedule next salaat");
+            Salaat nextSalaat = getNextSalaat(context, Calendar.getInstance());
+            if (nextSalaat != null) {
+                Intent notificationIntent = new Intent(context, NotificationPublisher.class);
+                notificationIntent.putExtra(SALAAT_NAME, nextSalaat.getSalaatName());
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+                long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
+                Log.i("sqldata", "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
+                AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+                alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+                Log.i("sqldata", "Finished scheduling next salaat");
+            }
+        }
     }
 
     public static void cancelNextSalaatNotification(Context context) {
@@ -99,10 +107,9 @@ public class Data {
         alarmManager.cancel(pendingIntent);
     }
 
-    public Salaat getNextSalaat(Context context) {
+    public Salaat getNextSalaat(Context context, Calendar now) {
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         String city = preferences.getString("city", "London");
-        Calendar now = Calendar.getInstance();
         Calendar salaat = (Calendar)now.clone();
         String salaatName = null;
         salaat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
@@ -154,8 +161,15 @@ public class Data {
                 salaat.set(Calendar.MINUTE, minute);
                 salaat.set(Calendar.SECOND, 0);
                 salaat.set(Calendar.MILLISECOND, 0);
-                Log.w("salaattimes_data", "No salaat today is after now");
-                salaatName = "Fajr";
+                if (now.compareTo(salaat) < 0) {
+                    Log.w("salaattimes_data", "No salaat today is after now");
+                    salaatName = "Fajr";
+                }
+                else {
+                    Log.w("salaattimes_data", "You're set in another timezone and in fact next salaat is after tomorrow fajr");
+                    return null;
+                }
+
             } catch (Exception e) {}
 
         }

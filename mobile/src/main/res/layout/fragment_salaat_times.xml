@@ -17,14 +17,14 @@
     tools:context=".SalaatTimes$PlaceholderFragment">
     <TableRow>
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:id="@+id/imsaak_label"
             android:layout_column="1"
             android:text="@string/imsaak"
             android:padding="3dip" />
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:id="@+id/imsaak_value"
             android:text="00:00"
@@ -33,14 +33,14 @@
     </TableRow>
     <TableRow>
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:id="@+id/fajr_label"
             android:layout_column="1"
             android:text="@string/fajr"
             android:padding="3dip" />
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:id="@+id/fajr_value"
             android:text="00:00"
@@ -49,14 +49,14 @@
     </TableRow>
     <TableRow>
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:id="@+id/sunrise_label"
             android:layout_column="1"
             android:text="@string/sunrise"
             android:padding="3dip" />
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:id="@+id/sunrise_value"
             android:text="00:00"
@@ -65,14 +65,14 @@
     </TableRow>
     <TableRow>
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:layout_column="1"
             android:id="@+id/zohr_label"
             android:text="@string/zohr"
             android:padding="3dip" />
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:text="00:00"
             android:id="@+id/zohr_value"
@@ -81,7 +81,7 @@
     </TableRow>
     <TableRow>
         <TextView
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:layout_column="1"
             android:id="@+id/sunset_label"
@@ -89,7 +89,7 @@
             android:padding="3dip" />
         <TextView
             android:id="@+id/sunset_value"
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:text="00:00"
             android:gravity="right"
@@ -98,14 +98,14 @@
     <TableRow>
         <TextView
             android:id="@+id/maghrib_label"
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:layout_column="1"
             android:text="@string/maghrib"
             android:padding="3dip" />
         <TextView
             android:id="@+id/maghrib_value"
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:text="00:00"
             android:gravity="right"
@@ -114,14 +114,14 @@
     <TableRow>
         <TextView
             android:id="@+id/tomorrowfajr_label"
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:layout_column="1"
             android:text="@string/tomorrowfajr"
             android:padding="3dip" />
         <TextView
             android:id="@+id/tomorrowfajr_value"
-            android:textSize="32sp"
+            android:textSize="30sp"
             android:textColor="@color/white"
             android:text="00:00"
             android:gravity="right"
