@@ -1,6 +1,6 @@
 package com.azam.android.salaattimes;
 
-import java.util.Calendar;
+import android.util.Log;
 
 /**
  * Created by zaheer on 9/14/14.
@@ -49,6 +49,26 @@ public class Entry {
         if (dst) hour = hour + 1;
         String hour_str = (hour < 10) ? "0" + String.valueOf(hour) : String.valueOf(hour);
         return hour_str + ":" + time_split[1];
+    }
+
+    public static String reformatImsaak(String city, String time, boolean dst) {
+        String[] time_split = time.split(":");
+        int hour = Integer.valueOf(time_split[0]).intValue();
+        String minute = time_split[1];
+        if (dst) hour = hour + 1;
+        if (city.equals("Leicester") && dst) {
+            // special case, drop imsaak by 10 minutes
+            int minute_int = Integer.valueOf(minute).intValue();
+            minute_int -= 10;
+            if (minute_int < 0) {
+                minute_int = 60 - Math.abs(minute_int);
+                hour -= 1;
+            }
+            minute = (minute_int < 10) ? "0" + String.valueOf(minute_int) : String.valueOf(minute_int);
+
+        }
+        String hour_str = (hour < 10) ? "0" + String.valueOf(hour) : String.valueOf(hour);
+        return hour_str + ":" + minute;
     }
 
     private String imsaak;

@@ -66,7 +66,7 @@ public class Data {
             dst = true;
         }
         Entry retVal = new Entry(
-                Entry.reformatString(c.getString(0), dst),
+                Entry.reformatImsaak(city, c.getString(0), dst),
                 Entry.reformatString(c.getString(1), dst),
                 Entry.reformatString(c.getString(2), dst),
                 Entry.reformatString(c.getString(3), dst),

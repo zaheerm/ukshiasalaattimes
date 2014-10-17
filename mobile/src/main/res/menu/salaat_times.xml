@@ -13,6 +13,8 @@
             android:title="@string/action_birmingham" />
         <item android:id="@+id/action_peterborough"
             android:title="@string/action_peterborough" />
+        <item android:id="@+id/action_leicester"
+            android:title="@string/action_leicester" />
 
     </group>
     <item android:id="@+id/action_notifications"

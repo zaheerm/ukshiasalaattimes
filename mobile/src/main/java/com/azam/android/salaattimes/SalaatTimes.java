@@ -75,6 +75,8 @@ public class SalaatTimes extends Activity {
             item = menu.findItem(R.id.action_birmingham);
         else if (city.equals("Peterborough"))
             item = menu.findItem(R.id.action_peterborough);
+        else if (city.equals("Leicester"))
+            item = menu.findItem(R.id.action_leicester);
         if (item == null) Log.w("SalaatTimes", "Did not find menu item");
         else item.setChecked(true);
 
@@ -101,6 +103,9 @@ public class SalaatTimes extends Activity {
                 break;
             case R.id.action_peterborough:
                 city = "Peterborough";
+                break;
+            case R.id.action_leicester:
+                city = "Leicester";
                 break;
             case R.id.action_choosedate:
                 new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {

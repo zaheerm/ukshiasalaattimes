@@ -1,10 +1,12 @@
 package com.azam.android.salaattimes;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.util.Log;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,6 +28,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private final Context myContext;
 
+    private static int CURRENT_VERSION = 3;
     /**
      * Constructor
      * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
@@ -72,11 +75,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private boolean checkDataBase(){
 
         SQLiteDatabase checkDB = null;
-
+        boolean recent = true;
         try{
             String myPath = DB_PATH + DB_NAME;
             checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+            Cursor cursor = checkDB.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = 'salaat_version'", null);
+            if(cursor!=null) {
+                if(cursor.getCount()<=0) {
+                    recent = false;
+                }
+                cursor.close();
+            }
+            if (recent) {
+                Cursor version_cursor = checkDB.rawQuery("SELECT version FROM salaat_version", null);
+                if(version_cursor.getCount()<=0) {
+                    recent = false;
+                }
+                else {
+                    version_cursor.moveToFirst();
+                    if (version_cursor.getInt(0) < CURRENT_VERSION) {
+                        recent = false;
+                    }
+                }
+                version_cursor.close();
 
+            }
         }catch(SQLiteException e){
 
             //database does't exist yet.
@@ -89,7 +112,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         }
 
-        return checkDB != null ? true : false;
+        return (checkDB != null && recent) ? true : false;
     }
 
     /**
@@ -99,6 +122,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * */
     private void copyDataBase() throws IOException{
 
+        Log.i("DatabaseHelper", "First run of version, copying db");
         //Open your local db as the input stream
         InputStream myInput = myContext.getAssets().open(DB_NAME);
 
