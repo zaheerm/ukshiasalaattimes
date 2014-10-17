@@ -1,6 +1,8 @@
 package com.azam.android.salaattimes;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 /**
  * Created by zmerali on 10/8/14.
@@ -35,5 +37,11 @@ public class Salaat {
         if (salaatName.equals("Zohr")) return R.id.zohr_value;
         if (salaatName.equals("Maghrib")) return R.id.maghrib_value;
         return 0;
+    }
+
+    public String getSalaatTimeAsString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
+        sdf.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+        return sdf.format(salaatTime.getTime());
     }
 }

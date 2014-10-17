@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -144,6 +147,16 @@ public class SalaatTimes extends Activity {
             ft.commit();
             item.setChecked(true);
             scheduleNotification();
+            Data data = Data.getData(this);
+            Salaat salaat = data.getNextSalaat(this, Calendar.getInstance());
+            data.close();
+            RemoteViews views = new RemoteViews(getPackageName(), R.layout.single_salaat_app_widget);
+            views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());
+            views.setTextViewText(R.id.nextsalaat_value, salaat.getSalaatTimeAsString());
+            AppWidgetManager manager = AppWidgetManager.getInstance(this);
+            ComponentName thisWidget = new ComponentName(this, SingleSalaatAppWidget.class);
+            manager.updateAppWidget(thisWidget, views);
+
             return true;
         }
         return super.onOptionsItemSelected(item);

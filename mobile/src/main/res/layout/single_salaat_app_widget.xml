@@ -1,0 +1,29 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/widget_margin"
+    android:background="@color/transparent_gray" >
+    <TextView
+        android:id="@+id/nextsalaat_label"
+        android:textSize="30sp"
+        android:textColor="@color/white"
+        android:layout_column="1"
+        android:text="Next Salaat"
+        android:padding="10dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true" />
+    <TextView
+        android:id="@+id/nextsalaat_value"
+        android:textSize="30sp"
+        android:textColor="@color/white"
+        android:text="00:00"
+        android:gravity="right"
+        android:padding="3dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true" />
+
+</RelativeLayout>

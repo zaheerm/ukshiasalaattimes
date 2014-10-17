@@ -16,5 +16,7 @@
     <string name="action_peterborough">Peterborough</string>
     <string name="action_leicester">Leicester</string>
     <string name="action_choosedate">Choose date</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
 
 </resources>
