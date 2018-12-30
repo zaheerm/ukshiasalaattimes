@@ -14,8 +14,11 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -292,7 +295,7 @@ public class SalaatTimes extends Activity {
             return activeNetworkInfo != null && activeNetworkInfo.isConnected();
         }
 
-        private void setDate(View rootView) {
+        private void setDate(final View rootView) {
             resetColors(rootView);
             Data data = Data.getData(getActivity());
             Calendar day = getCalendar();
@@ -300,7 +303,6 @@ public class SalaatTimes extends Activity {
             try {
                 Entry entry = data.getEntry(day, city);
                 Salaat nextSalaat = data.getNextSalaat(getActivity(), Calendar.getInstance());
-                data.close();
                 for(int viewId : new int[]{
                         R.id.imsaak_value,
                         R.id.fajr_value,
@@ -319,28 +321,28 @@ public class SalaatTimes extends Activity {
                 }
                 ActionBar actionBar = getActivity().getActionBar();
                 if (city.equals("uselocation")) {
-                    if (isNetworkAvailable()) {
-                        Geocoder geoCoder = new Geocoder(getActivity());
-                        Location location = data.getLastKnownLocation();
-                        if (location != null) {
-                            try {
-                                List<Address> list = geoCoder.getFromLocation(location
-                                        .getLatitude(), location.getLongitude(), 1);
-                                if (list != null & list.size() > 0) {
-                                    Address address = list.get(0);
-                                    city = "GPS: " + address.getLocality();
-                                } else {
-                                    city = "GPS Location";
-                                }
-                            } catch (IOException e) {
-                                city = "GPS Location";
+                    city = "GPS Location";
+                    if (entry == null) {
+                        // Define a listener that responds to location updates
+                        LocationListener locationListener = new LocationListener() {
+                            public void onLocationChanged(Location location) {
+                                setDate(rootView);
+                                LocationManager lm = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+                                lm.removeUpdates(this);
                             }
-                        } else {
-                            city = "GPS Location";
-                        }
-                    } else {
-                        city = "GPS Location";
+
+                            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+                            public void onProviderEnabled(String provider) {}
+
+                            public void onProviderDisabled(String provider) {}
+                        };
+
+// Register the listener with the Location Manager to receive location updates
+                        LocationManager lm = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+                        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
                     }
+                    new GeocoderTask().execute(data);
                 }
                 actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
                 Calendar now = Calendar.getInstance();
@@ -356,8 +358,53 @@ public class SalaatTimes extends Activity {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
                 }
+            } finally {
+                data.close();
             }
 
+        }
+
+        private class GeocoderTask extends AsyncTask<Data, String, String> {
+
+            @Override
+            protected String doInBackground(Data... params) {
+                String city;
+                if (isNetworkAvailable()) {
+                    Data data = params[0];
+                    Geocoder geoCoder = new Geocoder(getActivity());
+                    Location location = data.getLastKnownLocation();
+                    if (location != null) {
+                        try {
+                            List<Address> list = geoCoder.getFromLocation(location
+                                    .getLatitude(), location.getLongitude(), 1);
+                            if (list != null & list.size() > 0) {
+                                Address address = list.get(0);
+                                city = "GPS: " + address.getLocality();
+                            } else {
+                                city = "GPS Location";
+                            }
+                        } catch (IOException e) {
+                            city = "GPS Location";
+                        }
+                    } else {
+                        city = "GPS Location";
+                    }
+                } else {
+                    city = "GPS Location";
+                }
+                return city;
+            }
+
+            @Override
+            protected void onPostExecute(String city) {
+                super.onPostExecute(city);
+                Activity activity = getActivity();
+                if (activity!=null) {
+                    ActionBar actionBar = getActivity().getActionBar();
+                    Calendar day = getCalendar();
+                    actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
+                }
+            }
         }
 
         private void highlightNextSalaat(View rootView, Salaat nextSalaat) {

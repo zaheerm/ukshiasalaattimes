@@ -141,23 +141,18 @@ public class Data {
     }
 
     public void scheduleNextSalaatNotification(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
-        boolean nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
+        Log.i("sqldata", "About to schedule next salaat");
+        Salaat nextSalaat = getNextSalaat(context, Calendar.getInstance());
+        if (nextSalaat != null) {
+            Intent notificationIntent = new Intent(context, NotificationPublisher.class);
+            notificationIntent.putExtra(SALAAT_NAME, nextSalaat.getSalaatName());
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        if (nextSalaatNotify) {
-            Log.i("sqldata", "About to schedule next salaat");
-            Salaat nextSalaat = getNextSalaat(context, Calendar.getInstance());
-            if (nextSalaat != null) {
-                Intent notificationIntent = new Intent(context, NotificationPublisher.class);
-                notificationIntent.putExtra(SALAAT_NAME, nextSalaat.getSalaatName());
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-                long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
-                Log.i("sqldata", "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
-                AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-                alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
-                Log.i("sqldata", "Finished scheduling next salaat");
-            }
+            long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
+            Log.i("sqldata", "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+            Log.i("sqldata", "Finished scheduling next salaat");
         }
     }
 
@@ -202,7 +197,7 @@ public class Data {
                 }
 
             }
-        }
+        } else return null;
         if (!found) {
             try {
                 String salaatTime = entry.getSalaat(R.id.tomorrowfajr_value);

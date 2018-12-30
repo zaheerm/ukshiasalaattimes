@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     signingConfigs {
@@ -12,8 +13,8 @@ android {
         applicationId "com.azam.android.salaattimes"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 31
-        versionName '2.20'
+        versionCode 34
+        versionName '2.23'
     }
     buildTypes {
         release {
@@ -49,4 +50,8 @@ dependencies {
     // Mockito framework
     testImplementation 'org.mockito:mockito-core:+'
     testImplementation "com.google.truth:truth:0.42"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+repositories {
+    mavenCentral()
 }
