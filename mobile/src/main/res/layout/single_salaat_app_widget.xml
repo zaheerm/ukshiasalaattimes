@@ -2,10 +2,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/widget_margin"
-    android:background="@color/transparent_gray" >
+    android:background="@color/transparent_gray"
+    android:id="@+id/nextsalaat_widget">
     <TextView
         android:id="@+id/nextsalaat_label"
-        android:textSize="30sp"
+        android:textSize="30dp"
         android:textColor="@color/white"
         android:layout_column="1"
         android:text="Next Salaat"
@@ -16,7 +17,7 @@
         android:layout_alignParentLeft="true" />
     <TextView
         android:id="@+id/nextsalaat_value"
-        android:textSize="30sp"
+        android:textSize="30dp"
         android:textColor="@color/white"
         android:text="00:00"
         android:gravity="right"

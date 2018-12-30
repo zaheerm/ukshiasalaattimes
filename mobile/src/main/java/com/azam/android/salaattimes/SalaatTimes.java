@@ -1,5 +1,6 @@
 package com.azam.android.salaattimes;
 
+import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -9,7 +10,15 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,17 +30,22 @@ import android.widget.DatePicker;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 
 public class SalaatTimes extends Activity {
 
+    private static final int MY_PERMISSION_REQUEST_LOCATION = 100;
+    private Menu optionsMenu;
     private Calendar currentDay;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_salaat_times);
+        NotificationPublisher.initializeChannels(this);
     }
 
     @Override
@@ -65,11 +79,12 @@ public class SalaatTimes extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        optionsMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.salaat_times, menu);
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
         boolean nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
-
+        boolean adhan = preferences.getBoolean("nextsalaatadhan", true);
         MenuItem item = null;
         String city = getCity();
         if (city.equals("London"))
@@ -80,14 +95,43 @@ public class SalaatTimes extends Activity {
             item = menu.findItem(R.id.action_peterborough);
         else if (city.equals("Leicester"))
             item = menu.findItem(R.id.action_leicester);
+        else if (city.equals("uselocation"))
+            item = menu.findItem(R.id.action_uselocation);
         if (item == null) Log.w("SalaatTimes", "Did not find menu item");
         else item.setChecked(true);
 
         item = menu.findItem(R.id.action_notifications);
         item.setChecked(nextSalaatNotify);
+        item = menu.findItem(R.id.action_adhan);
+        item.setChecked(adhan);
         return true;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSION_REQUEST_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    cityChosen("uselocation");
+                    optionsMenu.findItem(R.id.action_uselocation).setChecked(true);
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    cityChosen("London");
+                    optionsMenu.findItem(R.id.action_london).setChecked(true);
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request.
+        }
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -97,6 +141,7 @@ public class SalaatTimes extends Activity {
         int id = item.getItemId();
         boolean citySelected = true;
         String city = null;
+        SharedPreferences preferences = getSharedPreferences("salaat", 0);
         switch (id) {
             case R.id.action_london:
                 city = "London";
@@ -109,6 +154,12 @@ public class SalaatTimes extends Activity {
                 break;
             case R.id.action_leicester:
                 city = "Leicester";
+                break;
+            case R.id.action_uselocation:
+                city = "uselocation";
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
+                }
                 break;
             case R.id.action_choosedate:
                 new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
@@ -124,44 +175,53 @@ public class SalaatTimes extends Activity {
                 break;
             case R.id.action_notifications:
                 item.setChecked(!item.isChecked());
-                SharedPreferences preferences = getSharedPreferences("salaat", 0);
                 boolean nextSalaatNotify = item.isChecked();
                 preferences.edit().putBoolean("nextsalaatnotify", nextSalaatNotify).commit();
-                if (!nextSalaatNotify) {
-                    Data.cancelNextSalaatNotification(this);
-                } else {
-                    scheduleNotification();
-                }
+                scheduleNotification();
                 citySelected = false;
                 break;
+            case R.id.action_adhan:
+                item.setChecked(!item.isChecked());
+                boolean adhan = item.isChecked();
+                preferences.edit().putBoolean("nextsalaatadhan", adhan).commit();
+                citySelected = false;
+                break;
+
             default:
                 citySelected = false;
         }
         if (citySelected) {
-            SharedPreferences preferences = getSharedPreferences("salaat", 0);
-            preferences.edit().putString("city", city).commit();
-            Log.i("SalaatTimesActivity", "City chosen " + city);
-            FragmentTransaction ft = getFragmentManager().beginTransaction();
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            ft.replace(R.id.container, SalaatTimeFragment.newInstance(currentDay, city));
-            ft.commit();
+            cityChosen(city);
             item.setChecked(true);
-            scheduleNotification();
-            Data data = Data.getData(this);
-            Salaat salaat = data.getNextSalaat(this, Calendar.getInstance());
-            data.close();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void cityChosen(String city) {
+        SharedPreferences preferences = getSharedPreferences("salaat", 0);
+        preferences.edit().putString("city", city).commit();
+        Log.i("SalaatTimesActivity", "City chosen " + city);
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.replace(R.id.container, SalaatTimeFragment.newInstance(currentDay, city));
+        ft.commit();
+        scheduleNotification();
+        Data data = Data.getData(this);
+        Salaat salaat = null;
+        try {
+            salaat = data.getNextSalaat(this, Calendar.getInstance());
+        } catch (SecurityException e) {}
+        data.close();
+        if (salaat != null) {
             RemoteViews views = new RemoteViews(getPackageName(), R.layout.single_salaat_app_widget);
             views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());
             views.setTextViewText(R.id.nextsalaat_value, salaat.getSalaatTimeAsString());
             AppWidgetManager manager = AppWidgetManager.getInstance(this);
             ComponentName thisWidget = new ComponentName(this, SingleSalaatAppWidget.class);
             manager.updateAppWidget(thisWidget, views);
-
-            return true;
         }
-        return super.onOptionsItemSelected(item);
     }
-
 
     public void changeDay(Calendar day) {
         currentDay = day;
@@ -225,39 +285,79 @@ public class SalaatTimes extends Activity {
             return getArguments().getString("city");
         }
 
+        private boolean isNetworkAvailable() {
+            ConnectivityManager connectivityManager
+                    = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+
         private void setDate(View rootView) {
             resetColors(rootView);
             Data data = Data.getData(getActivity());
             Calendar day = getCalendar();
             String city = getCity();
-
-            Entry entry = data.getEntry(day, city);
-            Salaat nextSalaat = data.getNextSalaat(getActivity(), Calendar.getInstance());
-            data.close();
-            for(int viewId : new int[]{
-                    R.id.imsaak_value,
-                    R.id.fajr_value,
-                    R.id.sunrise_value,
-                    R.id.zohr_value,
-                    R.id.sunset_value,
-                    R.id.maghrib_value,
-                    R.id.tomorrowfajr_value
-            }) {
-                TextView t = (TextView)rootView.findViewById(viewId);
-                try {
-                    t.setText(entry.getSalaat(viewId));
-                } catch (Exception e) {
-                    // should never get here
+            try {
+                Entry entry = data.getEntry(day, city);
+                Salaat nextSalaat = data.getNextSalaat(getActivity(), Calendar.getInstance());
+                data.close();
+                for(int viewId : new int[]{
+                        R.id.imsaak_value,
+                        R.id.fajr_value,
+                        R.id.sunrise_value,
+                        R.id.zohr_value,
+                        R.id.sunset_value,
+                        R.id.maghrib_value,
+                        R.id.tomorrowfajr_value
+                }) {
+                    TextView t = (TextView)rootView.findViewById(viewId);
+                    try {
+                        t.setText(entry.getSalaat(viewId));
+                    } catch (Exception e) {
+                        // should never get here
+                    }
+                }
+                ActionBar actionBar = getActivity().getActionBar();
+                if (city.equals("uselocation")) {
+                    if (isNetworkAvailable()) {
+                        Geocoder geoCoder = new Geocoder(getActivity());
+                        Location location = data.getLastKnownLocation();
+                        if (location != null) {
+                            try {
+                                List<Address> list = geoCoder.getFromLocation(location
+                                        .getLatitude(), location.getLongitude(), 1);
+                                if (list != null & list.size() > 0) {
+                                    Address address = list.get(0);
+                                    city = "GPS: " + address.getLocality();
+                                } else {
+                                    city = "GPS Location";
+                                }
+                            } catch (IOException e) {
+                                city = "GPS Location";
+                            }
+                        } else {
+                            city = "GPS Location";
+                        }
+                    } else {
+                        city = "GPS Location";
+                    }
+                }
+                actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
+                Calendar now = Calendar.getInstance();
+                if (nextSalaat != null) {
+                    if (day.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                            day.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
+                            day.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH)) {
+                        highlightNextSalaat(rootView, nextSalaat);
+                    }
+                }
+            } catch (SecurityException e) {
+                Activity context = getActivity();
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
                 }
             }
-            ActionBar actionBar = getActivity().getActionBar();
-            actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
-            Calendar now = Calendar.getInstance();
-            if (day.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-                    day.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
-                    day.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH)) {
-                highlightNextSalaat(rootView, nextSalaat);
-            }
+
         }
 
         private void highlightNextSalaat(View rootView, Salaat nextSalaat) {

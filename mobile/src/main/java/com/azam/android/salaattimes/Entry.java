@@ -23,7 +23,7 @@ public class Entry {
         this.tomorrowFajr = tomorrowFajr;
     }
 
-    public String getSalaat(int resourceId) throws Exception {
+    public String getSalaat(int resourceId) {
         switch (resourceId) {
             case R.id.imsaak_value:
                 return imsaak;
@@ -40,7 +40,7 @@ public class Entry {
             case R.id.tomorrowfajr_value:
                 return tomorrowFajr;
         }
-        throw new Exception("not found");
+        return "undefined";
     }
 
     public static String reformatString(String time, boolean dst) {
@@ -67,6 +67,23 @@ public class Entry {
             minute = (minute_int < 10) ? "0" + String.valueOf(minute_int) : String.valueOf(minute_int);
 
         }
+        String hour_str = (hour < 10) ? "0" + String.valueOf(hour) : String.valueOf(hour);
+        return hour_str + ":" + minute;
+    }
+
+    public static String computeImsaak(String fajr, boolean dst) {
+        String[] time_split = fajr.split(":");
+        int hour = Integer.valueOf(time_split[0]).intValue();
+        String minute = time_split[1];
+        if (dst) hour = hour + 1;
+        int minute_int = Integer.valueOf(minute).intValue();
+        minute_int -= 10;
+        if (minute_int < 0) {
+            minute_int = 60 - Math.abs(minute_int);
+            hour -= 1;
+        }
+        minute = (minute_int < 10) ? "0" + String.valueOf(minute_int) : String.valueOf(minute_int);
+
         String hour_str = (hour < 10) ? "0" + String.valueOf(hour) : String.valueOf(hour);
         return hour_str + ":" + minute;
     }

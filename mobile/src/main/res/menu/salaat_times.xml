@@ -15,9 +15,14 @@
             android:title="@string/action_peterborough" />
         <item android:id="@+id/action_leicester"
             android:title="@string/action_leicester" />
-
+        <item android:id="@+id/action_uselocation"
+            android:title="@string/action_uselocation" />
     </group>
     <item android:id="@+id/action_notifications"
         android:title="Salaat Reminder"
         android:checkable="true" />
+    <item android:id="@+id/action_adhan"
+        android:title="Play Adhan"
+        android:checkable="true" />
+
 </menu>

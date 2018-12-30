@@ -1,8 +1,12 @@
 package com.azam.android.salaattimes;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -13,7 +17,9 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.location.Location;
 import android.util.Log;
+import android.location.LocationManager;
 
 /**
  * Created by zaheer on 9/14/14.
@@ -21,33 +27,90 @@ import android.util.Log;
 public class Data {
     public final static String SALAAT_NAME = "com.azam.android.salaattimes.salaat_name";
     private SQLiteOpenHelper openHelper;
-    public Data(SQLiteOpenHelper openHelper) {
+
+    private Context context;
+
+    public Data(SQLiteOpenHelper openHelper, Context context) {
         this.openHelper = openHelper;
+        this.context = context;
+
     }
 
+    public Location getLastKnownLocation() throws SecurityException {
+        LocationManager mLocationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+        List<String> providers = mLocationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            Location l = mLocationManager.getLastKnownLocation(provider);
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                // Found best last known location: %s", l);
+                bestLocation = l;
+            }
+        }
+        return bestLocation;
+    }
     public static Data getData(Context context) {
         DatabaseHelper myDbHelper = new DatabaseHelper(context);
-        try {
-            myDbHelper.createDataBase();
-        } catch (IOException ioe) {
-            throw new Error("Unable to create database");
-        }
 
-        try {
-            myDbHelper.openDataBase();
-        }catch(SQLException sqle){
-            throw sqle;
-        }
-        return new Data(myDbHelper);
+        myDbHelper.createDataBase();
+
+        myDbHelper.openDataBase();
+        return new Data(myDbHelper, context);
     }
 
     public void close() {
         openHelper.close();
     }
 
-    public Entry getEntry(Calendar day, String city) {
+    public Entry computeEntry(Calendar day) throws SecurityException {
+        TimeZone tz = TimeZone.getDefault();
+        // Test Prayer times here
+        PrayTime prayers = new PrayTime();
+        Location l = getLastKnownLocation();
+        double latitude;
+        double longitude;
+        if (l != null) {
+            latitude = l.getLatitude();
+            longitude = l.getLongitude();
+            Log.i("sqlitedata", "Using latitude " + latitude + " longitude " + longitude);
+        } else {
+            return null;
+        }
+        prayers.setTimeFormat(prayers.Time24);
+        prayers.setCalcMethod(prayers.Jafari);
+        prayers.setAsrJuristic(prayers.Shafii);
+        prayers.setAdjustHighLats(prayers.AngleBased);
+        int[] offsets = {0, 0, 0, 0, 0, 0, 0}; // {Fajr,Sunrise,Dhuhr,Asr,Sunset,Maghrib,Isha}
+        prayers.tune(offsets);
+        double todayOffset = TimeUnit.HOURS.convert(tz.getOffset(day.getTimeInMillis()), TimeUnit.MILLISECONDS);
+        boolean dst = false; // offset will take care of dst
+
+        ArrayList<String> prayerTimes = prayers.getPrayerTimes(day,
+                latitude, longitude, todayOffset);
+        Calendar tomorrow = (Calendar)day.clone();
+        tomorrow.add(Calendar.DAY_OF_MONTH, 1);
+        double tomorrowOffset = TimeUnit.HOURS.convert(tz.getOffset(tomorrow.getTimeInMillis()), TimeUnit.MILLISECONDS);
+
+        ArrayList<String> tomorrowPrayerTimes = prayers.getPrayerTimes(tomorrow,
+                latitude, longitude, tomorrowOffset);
+        Entry retVal = new Entry(
+                Entry.computeImsaak(prayerTimes.get(0), dst),
+                Entry.reformatString(prayerTimes.get(0), dst),
+                Entry.reformatString(prayerTimes.get(1), dst),
+                Entry.reformatString(prayerTimes.get(2), dst),
+                Entry.reformatString(prayerTimes.get(4), dst),
+                Entry.reformatString(prayerTimes.get(5), dst),
+                Entry.reformatString(tomorrowPrayerTimes.get(0), dst));
+        return retVal;
+    }
+
+    public Entry getEntry(Calendar day, String city) throws SecurityException {
+        if (city.equals("uselocation")) return computeEntry(day);
         TimeZone tz = TimeZone.getTimeZone("Europe/London");
-        Log.d("sqlitedata", "day is " + day.get(Calendar.DAY_OF_MONTH) + " month is " + day.get(Calendar.MONTH));
+        Log.d("sqlitedata", "day is " + day.get(Calendar.DAY_OF_MONTH) + " month is " + day.get(Calendar.MONTH) + " city is " + city);
         SQLiteDatabase db = openHelper.getReadableDatabase();
         String month = String.valueOf(day.get(Calendar.MONTH) + 1);
         String dom = String.valueOf(day.get(Calendar.DAY_OF_MONTH));
@@ -98,29 +161,20 @@ public class Data {
         }
     }
 
-    public static void cancelNextSalaatNotification(Context context) {
-        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        Log.i("sqldata", "Cancelling next salaat notification");
-        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.cancel(pendingIntent);
-    }
-
-    public Salaat getNextSalaat(Context context, Calendar now) {
+    public Salaat getNextSalaat(Context context, Calendar now) throws SecurityException {
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         String city = preferences.getString("city", "London");
         Calendar salaat = (Calendar)now.clone();
         String salaatName = null;
-        salaat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+        if (!city.equals("uselocation")) salaat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
         boolean found = false;
         Entry entry = getEntry(now, city);
-        for(int viewId : new int[]{
-                R.id.fajr_value,
-                R.id.zohr_value,
-                R.id.maghrib_value,
-        }) {
-            try {
+        if (entry != null) {
+            for(int viewId : new int[]{
+                    R.id.fajr_value,
+                    R.id.zohr_value,
+                    R.id.maghrib_value,
+            }) {
                 String salaatTime = entry.getSalaat(viewId);
                 String[] time_split = salaatTime.split(":");
                 int hour = Integer.valueOf(time_split[0]);
@@ -146,8 +200,7 @@ public class Data {
                     }
                     break;
                 }
-            } catch (Exception e) {
-                Log.w("salaattimes_data", "Got exception " + e.toString());
+
             }
         }
         if (!found) {
@@ -167,12 +220,12 @@ public class Data {
                 }
                 else {
                     Log.w("salaattimes_data", "You're set in another timezone and in fact next salaat is after tomorrow fajr");
-                    return null;
+                    salaatName = "Fajr";
                 }
 
-            } catch (Exception e) {}
+            } catch (Exception e) { return null; }
 
         }
-        return new Salaat(salaatName, salaat);
+        return new Salaat(salaatName, salaat, city.equals("uselocation"));
     }
 }

@@ -18,10 +18,12 @@ public class Salaat {
 
     private String salaatName;
     private Calendar salaatTime;
+    private boolean localTimezone;
 
-    public Salaat(String salaatName, Calendar salaatTime) {
+    public Salaat(String salaatName, Calendar salaatTime, boolean localTimezone) {
         this.salaatName = salaatName;
         this.salaatTime = salaatTime;
+        this.localTimezone = localTimezone;
     }
 
     public int getLabel() {
@@ -41,7 +43,11 @@ public class Salaat {
 
     public String getSalaatTimeAsString() {
         SimpleDateFormat sdf = new SimpleDateFormat("kk:mm");
-        sdf.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+        if (!localTimezone) sdf.setTimeZone(TimeZone.getTimeZone("Europe/London"));
         return sdf.format(salaatTime.getTime());
+    }
+
+    public String toString() {
+        return salaatName + " " + getSalaatTimeAsString();
     }
 }
