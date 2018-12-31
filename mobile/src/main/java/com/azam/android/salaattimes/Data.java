@@ -159,68 +159,73 @@ public class Data {
     public Salaat getNextSalaat(Context context, Calendar now) throws SecurityException {
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         String city = preferences.getString("city", "London");
-        Calendar salaat = (Calendar)now.clone();
+        Calendar salaat = (Calendar) now.clone();
         String salaatName = null;
         if (!city.equals("uselocation")) salaat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
         boolean found = false;
         Entry entry = getEntry(now, city);
-        if (entry != null) {
-            for(int viewId : new int[]{
-                    R.id.fajr_value,
-                    R.id.zohr_value,
-                    R.id.maghrib_value,
-            }) {
-                String salaatTime = entry.getSalaat(viewId);
-                String[] time_split = salaatTime.split(":");
-                int hour = Integer.valueOf(time_split[0]);
-                int minute = Integer.valueOf(time_split[1]);
-                salaat.set(Calendar.HOUR_OF_DAY, hour);
-                salaat.set(Calendar.MINUTE, minute);
-                salaat.set(Calendar.SECOND, 0);
-                salaat.set(Calendar.MILLISECOND, 0);
+        try {
+            if (entry != null) {
+                for (int viewId : new int[]{
+                        R.id.fajr_value,
+                        R.id.zohr_value,
+                        R.id.maghrib_value,
+                }) {
+                    String salaatTime = entry.getSalaat(viewId);
+                    String[] time_split = salaatTime.split(":");
+                    int hour = Integer.valueOf(time_split[0]);
+                    int minute = Integer.valueOf(time_split[1]);
+                    salaat.set(Calendar.HOUR_OF_DAY, hour);
+                    salaat.set(Calendar.MINUTE, minute);
+                    salaat.set(Calendar.SECOND, 0);
+                    salaat.set(Calendar.MILLISECOND, 0);
 
-                Log.d("salaattimes_data", "Comparing " + salaat.toString() + " to " + now.toString());
-                if (now.compareTo(salaat) < 0) {
-                    Log.d("salaattimes_data", "Salaat " + String.valueOf(viewId) + " is after now");
-                    found = true;
-                    switch (viewId) {
-                        case R.id.fajr_value:
-                            salaatName = "Fajr";
-                            break;
-                        case R.id.zohr_value:
-                            salaatName = "Zohr";
-                            break;
-                        case R.id.maghrib_value:
-                            salaatName = "Maghrib";
+                    Log.d("salaattimes_data", "Comparing " + salaat.toString() + " to " + now.toString());
+                    if (now.compareTo(salaat) < 0) {
+                        Log.d("salaattimes_data", "Salaat " + String.valueOf(viewId) + " is after now");
+                        found = true;
+                        switch (viewId) {
+                            case R.id.fajr_value:
+                                salaatName = "Fajr";
+                                break;
+                            case R.id.zohr_value:
+                                salaatName = "Zohr";
+                                break;
+                            case R.id.maghrib_value:
+                                salaatName = "Maghrib";
+                        }
+                        break;
                     }
-                    break;
+
+                }
+            } else return null;
+            if (!found) {
+                try {
+                    String salaatTime = entry.getSalaat(R.id.tomorrowfajr_value);
+                    String[] time_split = salaatTime.split(":");
+                    int hour = Integer.valueOf(time_split[0]);
+                    int minute = Integer.valueOf(time_split[1]);
+                    salaat.add(Calendar.DAY_OF_MONTH, 1);
+                    salaat.set(Calendar.HOUR_OF_DAY, hour);
+                    salaat.set(Calendar.MINUTE, minute);
+                    salaat.set(Calendar.SECOND, 0);
+                    salaat.set(Calendar.MILLISECOND, 0);
+                    if (now.compareTo(salaat) < 0) {
+                        Log.w("salaattimes_data", "No salaat today is after now");
+                        salaatName = "Fajr";
+                    } else {
+                        Log.w("salaattimes_data", "You're set in another timezone and in fact next salaat is after tomorrow fajr");
+                        salaatName = "Fajr";
+                    }
+
+                } catch (Exception e) {
+                    return null;
                 }
 
             }
-        } else return null;
-        if (!found) {
-            try {
-                String salaatTime = entry.getSalaat(R.id.tomorrowfajr_value);
-                String[] time_split = salaatTime.split(":");
-                int hour = Integer.valueOf(time_split[0]);
-                int minute = Integer.valueOf(time_split[1]);
-                salaat.add(Calendar.DAY_OF_MONTH, 1);
-                salaat.set(Calendar.HOUR_OF_DAY, hour);
-                salaat.set(Calendar.MINUTE, minute);
-                salaat.set(Calendar.SECOND, 0);
-                salaat.set(Calendar.MILLISECOND, 0);
-                if (now.compareTo(salaat) < 0) {
-                    Log.w("salaattimes_data", "No salaat today is after now");
-                    salaatName = "Fajr";
-                }
-                else {
-                    Log.w("salaattimes_data", "You're set in another timezone and in fact next salaat is after tomorrow fajr");
-                    salaatName = "Fajr";
-                }
-
-            } catch (Exception e) { return null; }
-
+            return new Salaat(salaatName, salaat, city.equals("uselocation"));
+        } catch (NumberFormatException e) {
+            return null;
         }
-        return new Salaat(salaatName, salaat, city.equals("uselocation"));
     }
 }

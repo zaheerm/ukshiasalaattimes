@@ -24,5 +24,16 @@
     <item android:id="@+id/action_adhan"
         android:title="Play Adhan"
         android:checkable="true" />
-
+    <item android:id="@+id/action_fajr"
+        android:title="Remind for Fajr"
+        android:checkable="true"
+        android:visible="false" />
+    <item android:id="@+id/action_zohr"
+        android:title="Remind for Zohr"
+        android:checkable="true"
+        android:visible="false" />
+    <item android:id="@+id/action_maghrib"
+        android:title="Remind for Maghrib"
+        android:checkable="true"
+        android:visible="false" />
 </menu>

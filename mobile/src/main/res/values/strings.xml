@@ -17,5 +17,11 @@
     <string name="action_uselocation">GPS location</string>
     <string name="action_choosedate">Choose date</string>
     <string name="add_widget">Add widget</string>
+    <string name="provider_London">Times provided by KSIMC of London</string>
+    <string name="provider_Birmingham">Times provided by KSIMC of Birmingham</string>
+    <string name="provider_Peterborough">Times provided by Husaini Islamic Center Peterborough</string>
+    <string name="provider_Leicester">Times provided by Masjid Al Husayn Leicester</string>
+    <string name="provider_uselocation">Times calculated based on your GPS location and may differ from local centre timings that may be based on observations rather than calculations</string>
+
 
 </resources>

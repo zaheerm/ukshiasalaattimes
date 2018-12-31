@@ -20,8 +20,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -107,6 +107,12 @@ public class SalaatTimes extends Activity {
         item.setChecked(nextSalaatNotify);
         item = menu.findItem(R.id.action_adhan);
         item.setChecked(adhan);
+
+//        for (int i: new int[] {R.id.action_fajr, R.id.action_zohr, R.id.action_maghrib} ) {
+//            MenuItem mi = menu.findItem(i);
+//            mi.setChecked(nextSalaatNotify);
+//            mi.setVisible(nextSalaatNotify);
+//        }
         return true;
     }
 
@@ -179,6 +185,11 @@ public class SalaatTimes extends Activity {
             case R.id.action_notifications:
                 item.setChecked(!item.isChecked());
                 boolean nextSalaatNotify = item.isChecked();
+//                for (int i: new int[] {R.id.action_fajr, R.id.action_zohr, R.id.action_maghrib} ) {
+//                    MenuItem mi = optionsMenu.findItem(i);
+//                    mi.setChecked(nextSalaatNotify);
+//                    mi.setVisible(nextSalaatNotify);
+//                }
                 preferences.edit().putBoolean("nextsalaatnotify", nextSalaatNotify).commit();
                 scheduleNotification();
                 citySelected = false;
@@ -319,6 +330,14 @@ public class SalaatTimes extends Activity {
                         // should never get here
                     }
                 }
+                TextView t = (TextView)rootView.findViewById(R.id.provider);
+                int provider = R.string.provider_London;
+                if (city.equals("Birmingham")) provider = R.string.provider_Birmingham;
+                if (city.equals("Peterborough")) provider = R.string.provider_Peterborough;
+                if (city.equals("Leicester")) provider = R.string.provider_Leicester;
+                if (city.equals("uselocation")) provider = R.string.provider_uselocation;
+
+                t.setText(provider);
                 ActionBar actionBar = getActivity().getActionBar();
                 if (city.equals("uselocation")) {
                     city = "GPS Location";
@@ -361,7 +380,6 @@ public class SalaatTimes extends Activity {
             } finally {
                 data.close();
             }
-
         }
 
         private class GeocoderTask extends AsyncTask<Data, String, String> {

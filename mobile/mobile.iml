@@ -26,7 +26,7 @@
         <compilerSettings />
         <compilerArguments>
           <option name="destination" value="$MODULE_DIR$/build/tmp/kotlin-classes/proDebug" />
-          <option name="classpath" value="$USER_HOME$/.gradle/caches/transforms-1/files-1.1/support-v4-26.1.0.aar/241ef5356b3176bf6e92ab572904fc80/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/support-media-compat-26.1.0.aar/4ca78feaa58c31f234275704860f20b9/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/support-fragment-26.1.0.aar/41035b15003c7865de07df24c9b1d67a/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/support-core-utils-26.1.0.aar/b66ca42cb733007c9dd77f9198536cf5/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/support-core-ui-26.1.0.aar/2e6e0510859c2eebb607b933011dbea8/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/support-compat-26.1.0.aar/a2a4925aaab71cc695d3a9c2e1d18bf8/jars/classes.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/com.android.support/support-annotations/26.1.0/814258103cf26a15fcc26ecce35f5b7d24b73f8/support-annotations-26.1.0.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/runtime-1.0.0.aar/60448fbeecebb756861e68bce2ff0ad0/jars/classes.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/android.arch.lifecycle/common/1.0.0/e414a4cb28434e25c4f6aa71426eb20cf4874ae9/common-1.0.0.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/android.arch.core/common/1.0.0/a2d487452376193fc8c103dd2b9bd5f2b1b44563/common-1.0.0.jar:/Users/zaheer/Library/Android/sdk/platforms/android-28/android.jar" />
+          <option name="classpath" value="$USER_HOME$/.gradle/caches/transforms-1/files-1.1/legacy-support-v4-1.0.0.aar/5b7f61f783823bb438c8e048c074831e/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/media-1.0.0.aar/7a732cec622590e4f46a817f60b4b261/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/fragment-1.0.0.aar/0e3fe0615ac5f0930535f753445a0d6c/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/legacy-support-core-ui-1.0.0.aar/8f9dfe62b74c39d3b057df406e48fd71/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/legacy-support-core-utils-1.0.0.aar/deb43e26c6ded81f6fb719ead5ff6f69/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/loader-1.0.0.aar/da91d0ebaf25e83a5d66a49c3421965e/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/viewpager-1.0.0.aar/109ff2d0e8fe546348fa1c0f2000fb23/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/coordinatorlayout-1.0.0.aar/e262965eb7e174408c876f0be0be69c3/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/drawerlayout-1.0.0.aar/317239f13bf93178ed8b82eef86387b3/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/slidingpanelayout-1.0.0.aar/5df03acf92a83e8f373ee93025026e9e/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/customview-1.0.0.aar/b762486b3244b83dd462a1f4049bfa90/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/swiperefreshlayout-1.0.0.aar/bd26382a98a98d1b5f5d660d4782ca60/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/asynclayoutinflater-1.0.0.aar/5fde807de007684e8493b3bb53804d7e/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/core-1.0.0.aar/4264a365e6d0dc2f0a889401769d118a/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/versionedparcelable-1.0.0.aar/c7771e00f6edc1c5cf38349aab649756/jars/classes.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/androidx.collection/collection/1.0.0/42858b26cafdaa69b6149f45dfc2894007bc2c7a/collection-1.0.0.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/lifecycle-runtime-2.0.0.aar/db622b8a7c352cb90a6bc14ed387ee40/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/documentfile-1.0.0.aar/fec64069702b4cf32a2de2ccb1ec46aa/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/localbroadcastmanager-1.0.0.aar/ca3848c1662e2fe76d5e1dcd31009a54/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/print-1.0.0.aar/ba7141a83d9e3abc7ed225109f93847a/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/interpolator-1.0.0.aar/10931933b9090fa87e1bbf3801e60438/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/cursoradapter-1.0.0.aar/0fd4ef84d83cf13f463df77fa94f2f20/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/lifecycle-viewmodel-2.0.0.aar/9f3cb9ed21abfc31d7242c39d32a6e92/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/lifecycle-livedata-2.0.0.aar/e4b5431a9f8c7c3fac6344760166cdd1/jars/classes.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/lifecycle-livedata-core-2.0.0.aar/436cbb7418bf4cf7cb4c043d9eb063c5/jars/classes.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/androidx.lifecycle/lifecycle-common/2.0.0/e070ffae07452331bc5684734fce6831d531785c/lifecycle-common-2.0.0.jar:/Users/zaheer/.gradle/caches/transforms-1/files-1.1/core-runtime-2.0.0.aar/51169b2f4bb16dc4becfbcd824723e8f/jars/classes.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/androidx.arch.core/core-common/2.0.0/bb21b9a11761451b51624ac428d1f1bb5deeac38/core-common-2.0.0.jar:/Users/zaheer/.gradle/caches/modules-2/files-2.1/androidx.annotation/annotation/1.0.0/45599f2cd5965ac05a1488fa2a5c0cdd7c499ead/annotation-1.0.0.jar:/Users/zaheer/Library/Android/sdk/platforms/android-28/android.jar" />
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
           <option name="moduleName" value="mobile_proDebug" />
@@ -196,7 +196,9 @@
     <orderEntry type="jdk" jdkName="Android API 28 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="Gradle: backport-util-concurrent:backport-util-concurrent:3.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.slidingpanelayout:slidingpanelayout-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.objenesis:objenesis:2.6@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.lifecycle:lifecycle-livedata-2.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-error-diagnostics:2.2.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:robolectric:4.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.ow2.asm:asm-tree:7.0@jar" level="project" />
@@ -210,24 +212,27 @@
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven.wagon:wagon-provider-api:1.0-beta-6@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.2.71@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.ow2.asm:asm-commons:7.0@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-media-compat-26.1.0" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-annotations:26.1.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.versionedparcelable:versionedparcelable-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.ant:ant:1.8.0@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-v4-26.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.fragment:fragment-1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.swiperefreshlayout:swiperefreshlayout-1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.lifecycle:lifecycle-viewmodel-2.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains:annotations:13.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.coordinatorlayout:coordinatorlayout-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.ow2.asm:asm-analysis:7.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:resources:4.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.documentfile:documentfile-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:junit:4.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.j2objc:j2objc-annotations:1.1@jar" level="project" />
-    <orderEntry type="library" name="Gradle: android.arch.lifecycle:common:1.0.0@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-core-ui-26.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.googlecode.java-diff-utils:diffutils:1.3.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.interpolator:interpolator-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.checkerframework:checker-compat-qual:2.5.3@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-core-utils-26.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: androidx.test:core-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.code.findbugs:jsr305:3.0.2@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.legacy:legacy-support-v4-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.almworks.sqlite4java:sqlite4java:0.282@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-artifact-manager:2.2.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.asynclayoutinflater:asynclayoutinflater-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-settings:2.2.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.codehaus.plexus:plexus-container-default:1.0-alpha-9-stable-1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.52@jar" level="project" />
@@ -236,39 +241,51 @@
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.errorprone:error_prone_annotations:2.3.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-plugin-registry:2.2.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: net.bytebuddy:byte-buddy-agent:1.9.3@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.lifecycle:lifecycle-runtime-2.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.drawerlayout:drawerlayout-1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.media:media-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-ant-tasks:2.1.3@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.lifecycle:lifecycle-livedata-core-2.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.ibm.icu:icu4j:53.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.core:core-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.protobuf:protobuf-java:2.6.1@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-fragment-26.1.0" level="project" />
-    <orderEntry type="library" name="Gradle: android.arch.core:common:1.0.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven.wagon:wagon-http-shared:1.0-beta-6@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.ant:ant-launcher:1.8.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.legacy:legacy-support-core-utils-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-profile:2.2.1@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.android.support:support-compat-26.1.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: androidx.lifecycle:lifecycle-common:2.0.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.lifecycle:lifecycle-common:2.0.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.guava:guava:25.1-android@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: nekohtml:nekohtml:1.9.6.2@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: nekohtml:xercesMinimal:1.9.6.2@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-model:2.2.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.arch.core:core-common:2.0.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-repository-metadata:2.2.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.viewpager:viewpager-1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.arch.core:core-runtime-2.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.legacy:legacy-support-core-ui-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: junit:junit:4.12@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.auto.value:auto-value-annotations:1.6.2@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.hamcrest:hamcrest-core:1.3@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:utils:4.1@jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: androidx.annotation:annotation:1.0.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.annotation:annotation:1.0.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.android.apps.common.testing.accessibility.framework:accessibility-test-framework:2.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.loader:loader-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.ow2.asm:asm:7.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.customview:customview-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.hamcrest:hamcrest-library:1.3@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:shadows-framework:4.1@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.localbroadcastmanager:localbroadcastmanager-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.codehaus.plexus:plexus-interpolation:1.11@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.codehaus.plexus:plexus-utils:1.5.15@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.cursoradapter:cursoradapter-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-artifact:2.2.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.google.truth:truth:0.42@jar" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.print:print-1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: classworlds:classworlds:1.1-alpha-2@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: androidx.test:monitor-1.1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: net.bytebuddy:byte-buddy:1.9.3@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:shadowapi:4.1@jar" level="project" />
-    <orderEntry type="library" name="Gradle: android.arch.lifecycle:runtime-1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: androidx.collection:collection:1.0.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:sandbox:4.1@jar" level="project" />
   </component>
 </module>
