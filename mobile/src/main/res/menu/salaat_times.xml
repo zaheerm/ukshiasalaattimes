@@ -18,22 +18,27 @@
         <item android:id="@+id/action_uselocation"
             android:title="@string/action_uselocation" />
     </group>
-    <item android:id="@+id/action_notifications"
-        android:title="Salaat Reminder"
-        android:checkable="true" />
-    <item android:id="@+id/action_adhan"
-        android:title="Play Adhan"
-        android:checkable="true" />
-    <item android:id="@+id/action_fajr"
-        android:title="Remind for Fajr"
-        android:checkable="true"
-        android:visible="false" />
-    <item android:id="@+id/action_zohr"
-        android:title="Remind for Zohr"
-        android:checkable="true"
-        android:visible="false" />
-    <item android:id="@+id/action_maghrib"
-        android:title="Remind for Maghrib"
-        android:checkable="true"
-        android:visible="false" />
+    <item android:title="Salaat Reminder">
+        <menu>
+            <item android:id="@+id/action_adhan"
+                android:title="Play Adhan"
+                android:checkable="true" />
+            <item android:id="@+id/action_notifications"
+                android:checkable="true"
+                android:title="Remind for all" />
+            <item android:id="@+id/action_fajr"
+                android:title="Remind for Fajr"
+                android:checkable="true"
+                android:visible="true" />
+            <item android:id="@+id/action_zohr"
+                android:title="Remind for Zohr"
+                android:checkable="true"
+                android:visible="true" />
+            <item android:id="@+id/action_maghrib"
+                android:title="Remind for Maghrib"
+                android:checkable="true"
+                android:visible="true" />
+        </menu>
+    </item>
+
 </menu>

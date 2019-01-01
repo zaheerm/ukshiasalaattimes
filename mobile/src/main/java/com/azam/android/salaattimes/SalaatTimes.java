@@ -34,7 +34,9 @@ import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -86,7 +88,7 @@ public class SalaatTimes extends Activity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.salaat_times, menu);
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
-        boolean nextSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
+        boolean allSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
         boolean adhan = preferences.getBoolean("nextsalaatadhan", true);
         MenuItem item = null;
         String city = getCity();
@@ -104,18 +106,55 @@ public class SalaatTimes extends Activity {
         else item.setChecked(true);
 
         item = menu.findItem(R.id.action_notifications);
-        item.setChecked(nextSalaatNotify);
+        if (preferences.contains("fajrnotify")) {
+            // this means nextsalaatnotify is no longer used so use whether all salaats have it there
+            boolean all_salaat_checked = true;
+            for (String salaat: new String[] {"fajr", "zohr", "maghrib"}) {
+                boolean salaat_notify = preferences.getBoolean(salaat + "notify", true);
+                MenuItem individual_salaat_item = menu.findItem(getIdentifierByName("action_"+salaat));
+                individual_salaat_item.setChecked(salaat_notify);
+                all_salaat_checked = all_salaat_checked && salaat_notify;
+            }
+            item.setChecked(all_salaat_checked);
+        } else {
+            for (String salaat: new String[] {"fajr", "zohr", "maghrib"}) {
+                MenuItem individual_salaat_item = menu.findItem(getIdentifierByName("action_"+salaat));
+                individual_salaat_item.setChecked(allSalaatNotify);
+                preferences.edit().putBoolean(salaat + "notify", allSalaatNotify).apply();
+            }
+            item.setChecked(allSalaatNotify);
+        }
+
         item = menu.findItem(R.id.action_adhan);
         item.setChecked(adhan);
 
-//        for (int i: new int[] {R.id.action_fajr, R.id.action_zohr, R.id.action_maghrib} ) {
-//            MenuItem mi = menu.findItem(i);
-//            mi.setChecked(nextSalaatNotify);
-//            mi.setVisible(nextSalaatNotify);
-//        }
         return true;
     }
 
+    private void adjustAllSalaatNotifications() {
+        SharedPreferences preferences = getSharedPreferences("salaat", 0);
+        boolean all_salaat_checked = true;
+        for (String salaat: new String[] {"fajr", "zohr", "maghrib"}) {
+            MenuItem individual_salaat_item = optionsMenu.findItem(getIdentifierByName("action_"+salaat));
+            boolean salaat_notify = individual_salaat_item.isChecked();
+            all_salaat_checked = all_salaat_checked && salaat_notify;
+        }
+        MenuItem item = optionsMenu.findItem(R.id.action_notifications);
+        item.setChecked(all_salaat_checked);
+    }
+
+    private int getIdentifierByName(String identifier) {
+        try {
+            Class res = R.id.class;
+            Field field = res.getField(identifier);
+            int id = field.getInt(null);
+            return id;
+        }
+        catch (Exception e) {
+            Log.e("salaattimes", "Failure to get identifier.", e);
+        }
+        return -1;
+    }
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -184,15 +223,36 @@ public class SalaatTimes extends Activity {
                 break;
             case R.id.action_notifications:
                 item.setChecked(!item.isChecked());
-                boolean nextSalaatNotify = item.isChecked();
-//                for (int i: new int[] {R.id.action_fajr, R.id.action_zohr, R.id.action_maghrib} ) {
-//                    MenuItem mi = optionsMenu.findItem(i);
-//                    mi.setChecked(nextSalaatNotify);
-//                    mi.setVisible(nextSalaatNotify);
-//                }
-                preferences.edit().putBoolean("nextsalaatnotify", nextSalaatNotify).commit();
+                boolean allSalaatNotify = item.isChecked();
+                for (int i : new int[]{R.id.action_fajr, R.id.action_zohr, R.id.action_maghrib}) {
+                    MenuItem mi = optionsMenu.findItem(i);
+                    mi.setChecked(allSalaatNotify);
+                }
+                preferences.edit().putBoolean("nextsalaatnotify", allSalaatNotify).commit();
+                preferences.edit().putBoolean("fajrnotify", allSalaatNotify).apply();
+                preferences.edit().putBoolean("zohrnotify", allSalaatNotify).apply();
+                preferences.edit().putBoolean("maghribnotify", allSalaatNotify).apply();
+
                 scheduleNotification();
                 citySelected = false;
+                break;
+            case R.id.action_fajr:
+                item.setChecked(!item.isChecked());
+                citySelected = false;
+                preferences.edit().putBoolean("fajrnotify", item.isChecked()).apply();
+                adjustAllSalaatNotifications();
+                break;
+            case R.id.action_zohr:
+                item.setChecked(!item.isChecked());
+                citySelected = false;
+                preferences.edit().putBoolean("zohrnotify", item.isChecked()).apply();
+                adjustAllSalaatNotifications();
+                break;
+            case R.id.action_maghrib:
+                item.setChecked(!item.isChecked());
+                citySelected = false;
+                preferences.edit().putBoolean("maghribnotify", item.isChecked()).apply();
+                adjustAllSalaatNotifications();
                 break;
             case R.id.action_adhan:
                 item.setChecked(!item.isChecked());

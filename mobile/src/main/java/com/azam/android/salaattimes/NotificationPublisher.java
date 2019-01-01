@@ -23,6 +23,7 @@ import android.widget.RemoteViews;
 import java.util.Calendar;
 
 import static androidx.core.app.NotificationCompat.PRIORITY_DEFAULT;
+import static androidx.core.app.NotificationCompat.PRIORITY_HIGH;
 
 public class NotificationPublisher extends BroadcastReceiver {
 
@@ -42,7 +43,7 @@ public class NotificationPublisher extends BroadcastReceiver {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel("salaat", "Salaat", importance);
             channel.setDescription("Salaat time");
             channel.setLightColor(Color.GREEN);
@@ -65,25 +66,28 @@ public class NotificationPublisher extends BroadcastReceiver {
     }
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i("salaattimes_notify", "Received notification");
+        String salaat_name = intent.getStringExtra(Data.SALAAT_NAME);
+        Log.i("salaattimes_notify", "Received notification for " + salaat_name);
+
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         Uri adhanUri = Uri.parse("android.resource://"
                 + context.getPackageName() + "/" + R.raw.azan);
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannels(notificationManager, adhanUri);
-        if (preferences.getBoolean("nextsalaatnotify", true)) {
-            String salaat_name = intent.getStringExtra(Data.SALAAT_NAME);
+        if (preferences.getBoolean("nextsalaatnotify", false) ||
+                preferences.getBoolean(salaat_name.toLowerCase() + "notify", false)) {
             boolean adhan = preferences.getBoolean("nextsalaatadhan", true);
             String channel = "salaat";
             if (adhan)
                 channel = "salaat-with-adhan";
+            Log.i("salaattimes_notify", "Displaying notification for " + salaat_name + " on channel " + channel);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channel)
                     .setDefaults(Notification.DEFAULT_VIBRATE)
                     .setSmallIcon(R.drawable.ic_stat_kaaba)
                     .setContentTitle(salaat_name + " Salaat Time Now")
                     .setContentText("Time to pray " + salaat_name)
                     .setLights(Color.GREEN, 500, 500)
-                    .setPriority(PRIORITY_DEFAULT);
+                    .setPriority(PRIORITY_HIGH);
 
             if (adhan)
                 builder.setSound(adhanUri);
@@ -109,6 +113,10 @@ public class NotificationPublisher extends BroadcastReceiver {
             Notification notification = builder.build();
             // mId allows you to update the notification later on.
             notificationManager.notify(NOTIFICATION_ID, 0, notification);
+        } else {
+            Log.i("salaattimes_notify", "Not displaying notification because nextsalaatnotify: " +
+                    preferences.getBoolean("nextsalaatnotify", false) + " " + salaat_name.toLowerCase() + "notify: " +
+                    preferences.getBoolean(salaat_name.toLowerCase() + "notify", false));
         }
         Data data = Data.getData(context);
         data.scheduleNextSalaatNotification(context);
