@@ -22,12 +22,12 @@ import android.widget.RemoteViews;
 
 import java.util.Calendar;
 
-import static androidx.core.app.NotificationCompat.PRIORITY_DEFAULT;
 import static androidx.core.app.NotificationCompat.PRIORITY_HIGH;
 
 public class NotificationPublisher extends BroadcastReceiver {
 
     private static String NOTIFICATION_ID = "salaat-notification";
+    private final static String LOG_TAG = "salaattimes_notify";
 
     public NotificationPublisher() {
     }
@@ -66,8 +66,8 @@ public class NotificationPublisher extends BroadcastReceiver {
     }
     @Override
     public void onReceive(Context context, Intent intent) {
-        String salaat_name = intent.getStringExtra(Data.SALAAT_NAME);
-        Log.i("salaattimes_notify", "Received notification for " + salaat_name);
+        String salaat_name = intent.getStringExtra(SalaatTimes.SALAAT_NAME);
+        Log.i(LOG_TAG, "Received notification for " + salaat_name);
 
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         Uri adhanUri = Uri.parse("android.resource://"
@@ -80,7 +80,7 @@ public class NotificationPublisher extends BroadcastReceiver {
             String channel = "salaat";
             if (adhan)
                 channel = "salaat-with-adhan";
-            Log.i("salaattimes_notify", "Displaying notification for " + salaat_name + " on channel " + channel);
+            Log.i(LOG_TAG, "Displaying notification for " + salaat_name + " on channel " + channel);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channel)
                     .setDefaults(Notification.DEFAULT_VIBRATE)
                     .setSmallIcon(R.drawable.ic_stat_kaaba)
@@ -93,7 +93,7 @@ public class NotificationPublisher extends BroadcastReceiver {
                 builder.setSound(adhanUri);
 
             // Creates an explicit intent for an Activity in your app
-            Intent resultIntent = new Intent(context, SalaatTimes.class);
+            Intent resultIntent = new Intent(context, SalaatTimesActivity.class);
 
             // The stack builder object will contain an artificial back stack for the
             // started Activity.
@@ -101,7 +101,7 @@ public class NotificationPublisher extends BroadcastReceiver {
             // your application to the Home screen.
             TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
             // Adds the back stack for the Intent (but not the Intent itself)
-            stackBuilder.addParentStack(SalaatTimes.class);
+            stackBuilder.addParentStack(SalaatTimesActivity.class);
             // Adds the Intent that starts the Activity to the top of the stack
             stackBuilder.addNextIntent(resultIntent);
             PendingIntent resultPendingIntent =
@@ -114,17 +114,17 @@ public class NotificationPublisher extends BroadcastReceiver {
             // mId allows you to update the notification later on.
             notificationManager.notify(NOTIFICATION_ID, 0, notification);
         } else {
-            Log.i("salaattimes_notify", "Not displaying notification because nextsalaatnotify: " +
+            Log.i(LOG_TAG, "Not displaying notification because nextsalaatnotify: " +
                     preferences.getBoolean("nextsalaatnotify", false) + " " + salaat_name.toLowerCase() + "notify: " +
                     preferences.getBoolean(salaat_name.toLowerCase() + "notify", false));
         }
-        Data data = Data.getData(context);
-        data.scheduleNextSalaatNotification(context);
+        SalaatTimes salaatTimes = SalaatTimes.build(context);
+        salaatTimes.scheduleNextSalaatNotification(context);
         Salaat salaat = null;
         try {
-            salaat = data.getNextSalaat(context, Calendar.getInstance());
+            salaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
         } catch (SecurityException e) {}
-        data.close();
+        salaatTimes.close();
         if (salaat != null) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.single_salaat_app_widget);
             views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());

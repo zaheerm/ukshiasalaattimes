@@ -22,6 +22,6 @@
     <string name="provider_Peterborough">Times provided by Husaini Islamic Center Peterborough</string>
     <string name="provider_Leicester">Times provided by Masjid Al Husayn Leicester</string>
     <string name="provider_uselocation">Times calculated based on your GPS location and may differ from local centre timings that may be based on observations rather than calculations</string>
-
+    <string name="no_time_yet">Waiting...</string>
 
 </resources>

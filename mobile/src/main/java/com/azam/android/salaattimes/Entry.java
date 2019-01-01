@@ -1,7 +1,5 @@
 package com.azam.android.salaattimes;
 
-import android.util.Log;
-
 /**
  * Created by zaheer on 9/14/14.
  */

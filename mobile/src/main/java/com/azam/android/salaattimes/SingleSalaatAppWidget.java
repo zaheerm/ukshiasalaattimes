@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -20,13 +19,13 @@ public class SingleSalaatAppWidget extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         Log.i("widget", "onUpdate, scheduling next salaat");
-        Data data = Data.getData(context);
+        SalaatTimes salaatTimes = SalaatTimes.build(context);
         Salaat salaat = null;
         try {
-            salaat = data.getNextSalaat(context, Calendar.getInstance());
+            salaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
         } catch (SecurityException e) {}
-        if (salaat != null) data.scheduleNextSalaatNotification(context);
-        data.close();
+        if (salaat != null) salaatTimes.scheduleNextSalaatNotification(context);
+        salaatTimes.close();
 
         // There may be multiple widgets active, so update all of them
         if (salaat != null) {
@@ -55,7 +54,7 @@ public class SingleSalaatAppWidget extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.single_salaat_app_widget);
         views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());
         views.setTextViewText(R.id.nextsalaat_value, salaat.getSalaatTimeAsString());
-        Intent intent = new Intent(context, SalaatTimes.class);
+        Intent intent = new Intent(context, SalaatTimesActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 

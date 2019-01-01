@@ -32,7 +32,7 @@ MERGED from com.android.support:support-v4:20.0.0:17:5
 		ADDED from AndroidManifest.xml:10:9
 	android:theme
 		ADDED from AndroidManifest.xml:12:9
-activity#com.azam.android.salaattimes.SalaatTimes
+activity#com.azam.android.salaattimes.SalaatTimesActivity
 ADDED from AndroidManifest.xml:13:9
 	android:screenOrientation
 		ADDED from AndroidManifest.xml:16:13
@@ -84,7 +84,7 @@ action#android.appwidget.action.APPWIDGET_UPDATE
 ADDED from AndroidManifest.xml:39:17
 	android:name
 		ADDED from AndroidManifest.xml:39:25
-meta-data#android.appwidget.provider
+meta-salaatTimes#android.appwidget.provider
 ADDED from AndroidManifest.xml:42:13
 	android:resource
 		ADDED from AndroidManifest.xml:44:17

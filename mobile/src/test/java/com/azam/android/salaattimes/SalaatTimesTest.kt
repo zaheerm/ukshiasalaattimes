@@ -23,7 +23,7 @@ import java.util.*
  * Created by zmerali on 10/9/14.
  */
 @RunWith(MockitoJUnitRunner::class)
-class DataTest {
+class SalaatTimesTest {
     @Mock
     private val context: Context? = null
     @Mock
@@ -40,7 +40,7 @@ class DataTest {
     @Test
     @Throws(Exception::class)
     fun test_open_close() {
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         data.close()
         verify<DatabaseHelper>(dbHelper, times(1)).close()
     }
@@ -48,7 +48,7 @@ class DataTest {
     @Test
     @Throws(Exception::class)
     fun test_get_next_salaat_gps_no_location() {
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("uselocation")
         `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(locationManager)
@@ -60,7 +60,7 @@ class DataTest {
     @Test(expected=SecurityException::class)
     @Throws(Exception::class)
     fun test_get_next_salaat_gps_security_exception() {
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("uselocation")
         `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(locationManager)
@@ -76,7 +76,7 @@ class DataTest {
     @Test
     @Throws(Exception::class)
     fun test_get_next_salaat_gps_with_location() {
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("uselocation")
         `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(locationManager)
@@ -93,7 +93,7 @@ class DataTest {
     @Test
     @Throws(Exception::class)
     fun test_get_entry_with_city() {
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(dbHelper!!.getReadableDatabase()).thenReturn(db)
         `when`(db!!.rawQuery(anyString(), any())).thenReturn(cursor)
         `when`(cursor!!.getString(0)).thenReturn("05:00")
@@ -113,7 +113,7 @@ class DataTest {
     fun test_get_next_salaat_time_fajr() {
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("London")
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(dbHelper!!.getReadableDatabase()).thenReturn(db)
         `when`(db!!.rawQuery(anyString(), any())).thenReturn(cursor)
         `when`(cursor!!.getString(0)).thenReturn("05:00")
@@ -136,7 +136,7 @@ class DataTest {
     fun test_get_next_salaat_time_zohr() {
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("London")
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(dbHelper!!.getReadableDatabase()).thenReturn(db)
         `when`(db!!.rawQuery(anyString(), any())).thenReturn(cursor)
         `when`(cursor!!.getString(0)).thenReturn("05:00")
@@ -159,7 +159,7 @@ class DataTest {
     fun test_get_next_salaat_time_maghrib() {
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("London")
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(dbHelper!!.getReadableDatabase()).thenReturn(db)
         `when`(db!!.rawQuery(anyString(), any())).thenReturn(cursor)
         `when`(cursor!!.getString(0)).thenReturn("05:00")
@@ -182,7 +182,7 @@ class DataTest {
     fun test_get_next_salaat_time_tomorrowfajr() {
         `when`(context!!.getSharedPreferences("salaat", 0)).thenReturn(preferences)
         `when`(preferences!!.getString(eq("city"), anyString())).thenReturn("London")
-        val data = Data(dbHelper, context)
+        val data = SalaatTimes(dbHelper, context)
         `when`(dbHelper!!.getReadableDatabase()).thenReturn(db)
         `when`(db!!.rawQuery(anyString(), any())).thenReturn(cursor)
         `when`(cursor!!.getString(0)).thenReturn("05:00")

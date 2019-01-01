@@ -1,7 +1,7 @@
 //--------------------- Copyright Block ----------------------
 /*
 
-PrayTime.java: Prayer Times Calculator (ver 1.0)
+ComputedSalaatTimes.java: Prayer Times Calculator (ver 1.0)
 Copyright (C) 2007-2010 PrayTimes.org
 
 Java Code By: Hussain Ali Khan
@@ -31,7 +31,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.TimeZone;
 
-public class PrayTime {
+public class ComputedSalaatTimes {
 
     // ---------------------- Global Variables --------------------
     private int calcMethod; // caculation method
@@ -85,7 +85,7 @@ public class PrayTime {
     private double[] prayerTimesCurrent;
     private int[] offsets;
 
-    public PrayTime() {
+    public ComputedSalaatTimes() {
         // Initialize vars
 
         this.setCalcMethod(0);
@@ -704,7 +704,7 @@ public class PrayTime {
         double longitude = 145.121597;
         double timezone = 10;
         // Test Prayer times here
-        PrayTime prayers = new PrayTime();
+        ComputedSalaatTimes prayers = new ComputedSalaatTimes();
 
         prayers.setTimeFormat(prayers.Time12);
         prayers.setCalcMethod(prayers.Jafari);
