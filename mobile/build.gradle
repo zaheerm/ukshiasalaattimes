@@ -13,8 +13,8 @@ android {
         applicationId "com.azam.android.salaattimes"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 38
-        versionName '2.27'
+        versionCode 39
+        versionName '2.28'
     }
     buildTypes {
         release {

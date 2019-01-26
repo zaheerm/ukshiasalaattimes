@@ -74,8 +74,8 @@ public class NotificationPublisher extends BroadcastReceiver {
                 + context.getPackageName() + "/" + R.raw.azan);
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannels(notificationManager, adhanUri);
-        if (preferences.getBoolean("nextsalaatnotify", false) ||
-                preferences.getBoolean(salaat_name.toLowerCase() + "notify", false)) {
+        if ((preferences.contains(salaat_name.toLowerCase() + "notify") && preferences.getBoolean(salaat_name.toLowerCase() + "notify", false)) ||
+                (!preferences.contains(salaat_name.toLowerCase() + "notify") && preferences.getBoolean("nextsalaatnotify", false))) {
             boolean adhan = preferences.getBoolean("nextsalaatadhan", true);
             String channel = "salaat";
             if (adhan)
