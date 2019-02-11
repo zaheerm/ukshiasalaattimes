@@ -18,12 +18,17 @@ import android.location.Location;
 import android.util.Log;
 import android.location.LocationManager;
 
+import androidx.core.app.AlarmManagerCompat;
+
 /**
  * Created by zaheer on 9/14/14.
  */
 public class SalaatTimes {
     private final static String LOG_TAG = "salaat_times";
     public final static String SALAAT_NAME = "com.azam.android.salaattimes.salaat_name";
+    public final static String SALAAT_TIME_STR = "com.azam.android.salaattimes.salaat_time_str";
+    public final static String SALAAT_TIME = "com.azam.android.salaattimes.salaat_time";
+
     private SQLiteOpenHelper openHelper;
 
     private Context context;
@@ -145,12 +150,14 @@ public class SalaatTimes {
         if (nextSalaat != null) {
             Intent notificationIntent = new Intent(context, NotificationPublisher.class);
             notificationIntent.putExtra(SALAAT_NAME, nextSalaat.getSalaatName());
+            notificationIntent.putExtra(SALAAT_TIME_STR, nextSalaat.getSalaatTimeAsString());
+            notificationIntent.putExtra(SALAAT_TIME, nextSalaat.getSalaatTime().getTimeInMillis());
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
             Log.i(LOG_TAG, "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+            AlarmManagerCompat.setExact(alarmManager, AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
             Log.i(LOG_TAG, "Finished scheduling next salaat");
         }
     }

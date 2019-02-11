@@ -89,7 +89,6 @@ public class SalaatTimesActivity extends Activity {
         getMenuInflater().inflate(R.menu.salaat_times, menu);
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
         boolean allSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
-        boolean adhan = preferences.getBoolean("nextsalaatadhan", true);
         MenuItem item = null;
         String city = getCity();
         if (city.equals("London"))
@@ -105,7 +104,7 @@ public class SalaatTimesActivity extends Activity {
         if (item == null) Log.w(LOG_TAG, "Did not find menu item");
         else item.setChecked(true);
 
-        item = menu.findItem(R.id.action_notifications);
+        item = menu.findItem(R.id.action_all_salaat);
         if (preferences.contains("fajrnotify")) {
             // this means nextsalaatnotify is no longer used so use whether all salaats have it there
             boolean all_salaat_checked = true;
@@ -125,9 +124,6 @@ public class SalaatTimesActivity extends Activity {
             item.setChecked(allSalaatNotify);
         }
 
-        item = menu.findItem(R.id.action_adhan);
-        item.setChecked(adhan);
-
         return true;
     }
 
@@ -139,7 +135,7 @@ public class SalaatTimesActivity extends Activity {
             boolean salaat_notify = individual_salaat_item.isChecked();
             all_salaat_checked = all_salaat_checked && salaat_notify;
         }
-        MenuItem item = optionsMenu.findItem(R.id.action_notifications);
+        MenuItem item = optionsMenu.findItem(R.id.action_all_salaat);
         item.setChecked(all_salaat_checked);
     }
 
@@ -221,7 +217,7 @@ public class SalaatTimesActivity extends Activity {
                 }, currentDay.get(Calendar.YEAR), currentDay.get(Calendar.MONTH), currentDay.get(Calendar.DAY_OF_MONTH)).show();
                 citySelected = false;
                 break;
-            case R.id.action_notifications:
+            case R.id.action_all_salaat:
                 item.setChecked(!item.isChecked());
                 boolean allSalaatNotify = item.isChecked();
                 for (int i : new int[]{R.id.action_fajr, R.id.action_zohr, R.id.action_maghrib}) {
@@ -254,13 +250,6 @@ public class SalaatTimesActivity extends Activity {
                 preferences.edit().putBoolean("maghribnotify", item.isChecked()).apply();
                 adjustAllSalaatNotifications();
                 break;
-            case R.id.action_adhan:
-                item.setChecked(!item.isChecked());
-                boolean adhan = item.isChecked();
-                preferences.edit().putBoolean("nextsalaatadhan", adhan).apply();
-                citySelected = false;
-                break;
-
             default:
                 citySelected = false;
         }

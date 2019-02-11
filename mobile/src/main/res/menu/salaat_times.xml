@@ -20,22 +20,19 @@
     </group>
     <item android:title="Salaat Reminder">
         <menu>
-            <item android:id="@+id/action_adhan"
-                android:title="Play Adhan"
-                android:checkable="true" />
-            <item android:id="@+id/action_notifications"
+            <item android:id="@+id/action_all_salaat"
                 android:checkable="true"
-                android:title="Remind for all" />
+                android:title="Adhan for all" />
             <item android:id="@+id/action_fajr"
-                android:title="Remind for Fajr"
+                android:title="Adhan for Fajr"
                 android:checkable="true"
                 android:visible="true" />
             <item android:id="@+id/action_zohr"
-                android:title="Remind for Zohr"
+                android:title="Adhan for Zohr"
                 android:checkable="true"
                 android:visible="true" />
             <item android:id="@+id/action_maghrib"
-                android:title="Remind for Maghrib"
+                android:title="Adhan for Maghrib"
                 android:checkable="true"
                 android:visible="true" />
         </menu>

@@ -17,8 +17,12 @@ import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import androidx.core.app.NotificationCompat;
+
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.Calendar;
 
@@ -28,6 +32,7 @@ public class NotificationPublisher extends BroadcastReceiver {
 
     private static String NOTIFICATION_ID = "salaat-notification";
     private final static String LOG_TAG = "salaattimes_notify";
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     public NotificationPublisher() {
     }
@@ -66,58 +71,11 @@ public class NotificationPublisher extends BroadcastReceiver {
     }
     @Override
     public void onReceive(Context context, Intent intent) {
+        // ...
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
         String salaat_name = intent.getStringExtra(SalaatTimes.SALAAT_NAME);
         Log.i(LOG_TAG, "Received notification for " + salaat_name);
-
-        SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
-        Uri adhanUri = Uri.parse("android.resource://"
-                + context.getPackageName() + "/" + R.raw.azan);
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        createNotificationChannels(notificationManager, adhanUri);
-        if ((preferences.contains(salaat_name.toLowerCase() + "notify") && preferences.getBoolean(salaat_name.toLowerCase() + "notify", false)) ||
-                (!preferences.contains(salaat_name.toLowerCase() + "notify") && preferences.getBoolean("nextsalaatnotify", false))) {
-            boolean adhan = preferences.getBoolean("nextsalaatadhan", true);
-            String channel = "salaat";
-            if (adhan)
-                channel = "salaat-with-adhan";
-            Log.i(LOG_TAG, "Displaying notification for " + salaat_name + " on channel " + channel);
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channel)
-                    .setDefaults(Notification.DEFAULT_VIBRATE)
-                    .setSmallIcon(R.drawable.ic_stat_kaaba)
-                    .setContentTitle(salaat_name + " Salaat Time Now")
-                    .setContentText("Time to pray " + salaat_name)
-                    .setLights(Color.GREEN, 500, 500)
-                    .setPriority(PRIORITY_HIGH);
-
-            if (adhan)
-                builder.setSound(adhanUri);
-
-            // Creates an explicit intent for an Activity in your app
-            Intent resultIntent = new Intent(context, SalaatTimesActivity.class);
-
-            // The stack builder object will contain an artificial back stack for the
-            // started Activity.
-            // This ensures that navigating backward from the Activity leads out of
-            // your application to the Home screen.
-            TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-            // Adds the back stack for the Intent (but not the Intent itself)
-            stackBuilder.addParentStack(SalaatTimesActivity.class);
-            // Adds the Intent that starts the Activity to the top of the stack
-            stackBuilder.addNextIntent(resultIntent);
-            PendingIntent resultPendingIntent =
-                    stackBuilder.getPendingIntent(
-                            0,
-                            PendingIntent.FLAG_UPDATE_CURRENT
-                    );
-            builder.setContentIntent(resultPendingIntent);
-            Notification notification = builder.build();
-            // mId allows you to update the notification later on.
-            notificationManager.notify(NOTIFICATION_ID, 0, notification);
-        } else {
-            Log.i(LOG_TAG, "Not displaying notification because nextsalaatnotify: " +
-                    preferences.getBoolean("nextsalaatnotify", false) + " " + salaat_name.toLowerCase() + "notify: " +
-                    preferences.getBoolean(salaat_name.toLowerCase() + "notify", false));
-        }
         SalaatTimes salaatTimes = SalaatTimes.build(context);
         salaatTimes.scheduleNextSalaatNotification(context);
         Salaat salaat = null;
@@ -125,6 +83,10 @@ public class NotificationPublisher extends BroadcastReceiver {
             salaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
         } catch (SecurityException e) {}
         salaatTimes.close();
+        if (salaat != null && salaat.getSalaatName().toLowerCase().equals(salaat_name.toLowerCase())) {
+            Log.w(LOG_TAG, "Next salaat happens to be the same: " + salaat.getSalaatName());
+            return;
+        }
         if (salaat != null) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.single_salaat_app_widget);
             views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());
@@ -133,6 +95,61 @@ public class NotificationPublisher extends BroadcastReceiver {
             ComponentName thisWidget = new ComponentName(context, SingleSalaatAppWidget.class);
             manager.updateAppWidget(thisWidget, views);
         }
+        SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
+        Uri adhanUri = Uri.parse("android.resource://"
+                + context.getPackageName() + "/" + R.raw.azan);
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        createNotificationChannels(notificationManager, adhanUri);
+        String channel = "salaat";
+
+        if ((preferences.contains(salaat_name.toLowerCase() + "notify") && preferences.getBoolean(salaat_name.toLowerCase() + "notify", false)) ||
+                (!preferences.contains(salaat_name.toLowerCase() + "notify") && preferences.getBoolean("nextsalaatnotify", false))) {
+            channel = "salaat-with-adhan";
+        }
+        Bundle bundle = new Bundle();
+        bundle.putString("salaat_name", salaat_name);
+        bundle.putString("salaat_time_str", intent.getStringExtra(SalaatTimes.SALAAT_TIME_STR));
+        bundle.putLong("salaat_time", intent.getLongExtra(SalaatTimes.SALAAT_TIME, 0));
+        bundle.putLong("actual_time", System.currentTimeMillis());
+        bundle.putLong("lag", System.currentTimeMillis() - intent.getLongExtra(SalaatTimes.SALAAT_TIME, 0));
+        bundle.putString("city", preferences.getString("city", "London"));
+        bundle.putBoolean("adhan", channel.equals("salaat-with-adhan"));
+
+        mFirebaseAnalytics.logEvent("salaat_notify", bundle);
+        Log.i(LOG_TAG, "Displaying notification for " + salaat_name + " on channel " + channel);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channel)
+                .setDefaults(Notification.DEFAULT_VIBRATE)
+                .setSmallIcon(R.drawable.ic_stat_kaaba)
+                .setContentTitle(salaat_name + " Salaat Time Now")
+                .setContentText("Time to pray " + salaat_name)
+                .setLights(Color.GREEN, 500, 500)
+                .setPriority(PRIORITY_HIGH);
+
+        if (channel.equals("salaat-with-adhan"))
+            builder.setSound(adhanUri);
+
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(context, SalaatTimesActivity.class);
+
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(SalaatTimesActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        builder.setContentIntent(resultPendingIntent);
+        Notification notification = builder.build();
+        // mId allows you to update the notification later on.
+        notificationManager.notify(NOTIFICATION_ID, 0, notification);
+
 
     }
 
