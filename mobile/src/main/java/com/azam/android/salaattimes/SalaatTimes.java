@@ -157,7 +157,7 @@ public class SalaatTimes {
             long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
             Log.i(LOG_TAG, "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            AlarmManagerCompat.setExact(alarmManager, AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+            AlarmManagerCompat.setAlarmClock(alarmManager, AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
             Log.i(LOG_TAG, "Finished scheduling next salaat");
         }
     }

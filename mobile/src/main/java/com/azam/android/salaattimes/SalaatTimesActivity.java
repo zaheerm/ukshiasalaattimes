@@ -3,12 +3,15 @@ package com.azam.android.salaattimes;
 import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -18,6 +21,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
@@ -201,9 +205,31 @@ public class SalaatTimesActivity extends Activity {
                 break;
             case R.id.action_uselocation:
                 city = "uselocation";
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
-                }
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(R.string.location_dialog_message)
+                        .setTitle(R.string.location_dialog_title);
+
+                // Add the buttons
+                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User clicked OK button
+                        if (ContextCompat.checkSelfPermission(SalaatTimesActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(SalaatTimesActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
+                        }
+
+                    }
+                });
+                builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
+
+
+                // Create the AlertDialog
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
                 break;
             case R.id.action_choosedate:
                 new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
@@ -249,6 +275,10 @@ public class SalaatTimesActivity extends Activity {
                 citySelected = false;
                 preferences.edit().putBoolean("maghribnotify", item.isChecked()).apply();
                 adjustAllSalaatNotifications();
+                break;
+            case R.id.privacypolicy:
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://zaheer.merali.org/ukshiasalaattimes/privacy_policy_2022.html"));
+                startActivity(browserIntent);
                 break;
             default:
                 citySelected = false;

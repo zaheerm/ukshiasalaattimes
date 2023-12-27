@@ -8,13 +8,12 @@ android {
         }
     }
     compileSdkVersion 28
-    buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.azam.android.salaattimes"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 42
-        versionName '2.31'
+        versionCode 45
+        versionName '2.34'
     }
     buildTypes {
         release {
@@ -37,6 +36,7 @@ android {
         unitTests.includeAndroidResources = true
         unitTests.returnDefaultValues = true
     }
+    namespace 'com.azam.android.salaattimes'
 }
 
 dependencies {
@@ -46,7 +46,7 @@ dependencies {
     // Required -- JUnit 4 framework
     testImplementation 'junit:junit:4.12'
     // Robolectric environment
-    testImplementation 'androidx.test:core:1.0.0'
+    testImplementation 'androidx.test:core:1.4.0'
     testImplementation "org.robolectric:robolectric:4.1"
     // Mockito framework
     testImplementation 'org.mockito:mockito-core:+'

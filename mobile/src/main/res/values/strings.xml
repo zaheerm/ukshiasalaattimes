@@ -23,5 +23,9 @@
     <string name="provider_Leicester">Times provided by Masjid Al Husayn Leicester</string>
     <string name="provider_uselocation">Times calculated based on your GPS location and may differ from local centre timings that may be based on observations rather than calculations</string>
     <string name="no_time_yet">Waiting...</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+    <string name="location_dialog_message">When using the GPS location feature of this app, the app will ask you to give it permission to access the location of this phone. This app uses the location data to compute the Salaat times from your longitude and latitude. If you are unncomfortable with this, choose a named city from the list instead.</string>
+    <string name="location_dialog_title">Location permission needed for GPS Location feature.</string>
 
 </resources>
