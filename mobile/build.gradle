@@ -7,11 +7,11 @@ android {
             storeFile file('/Users/zmerali/Dropbox/documents/android_key')
         }
     }
-    compileSdkVersion 28
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.azam.android.salaattimes"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 33
         versionCode 45
         versionName '2.34'
     }
