@@ -49,6 +49,7 @@ public class SingleSalaatAppWidget extends AppWidgetProvider {
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
             int appWidgetId, Salaat salaat) {
+        Log.i("widget", "updateAppWidget");
 
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.single_salaat_app_widget);
@@ -56,7 +57,7 @@ public class SingleSalaatAppWidget extends AppWidgetProvider {
         views.setTextViewText(R.id.nextsalaat_value, salaat.getSalaatTimeAsString());
         Intent intent = new Intent(context, SalaatTimesActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, appWidgetId, intent, PendingIntent.FLAG_IMMUTABLE);
 
         views.setOnClickPendingIntent(R.id.nextsalaat_widget, pendingIntent);
         // Instruct the widget manager to update the widget

@@ -152,15 +152,27 @@ public class SalaatTimes {
             notificationIntent.putExtra(SALAAT_NAME, nextSalaat.getSalaatName());
             notificationIntent.putExtra(SALAAT_TIME_STR, nextSalaat.getSalaatTimeAsString());
             notificationIntent.putExtra(SALAAT_TIME, nextSalaat.getSalaatTime().getTimeInMillis());
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
-            Log.i(LOG_TAG, "Scheduled next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
+            Log.i(LOG_TAG, "Scheduling next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+            // Cancel existing alarms with same intent
+            alarmManager.cancel(pendingIntent);
+            boolean hasExactAlarmPermission = true;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                hasExactAlarmPermission = alarmManager.canScheduleExactAlarms();
+            }
+            if (hasExactAlarmPermission) {
+                AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+            } else {
+                Log.w(LOG_TAG, "No exact alarm permission");
+            }
             Log.i(LOG_TAG, "Finished scheduling next salaat");
         }
     }
+
+
 
     public Salaat getNextSalaat(Context context, Calendar now) throws SecurityException {
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);

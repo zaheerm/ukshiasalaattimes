@@ -143,7 +143,7 @@ public class NotificationPublisher extends BroadcastReceiver {
         PendingIntent resultPendingIntent =
                 stackBuilder.getPendingIntent(
                         0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE
                 );
         builder.setContentIntent(resultPendingIntent);
         Notification notification = builder.build();

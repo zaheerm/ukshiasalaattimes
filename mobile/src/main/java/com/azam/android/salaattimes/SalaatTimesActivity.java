@@ -3,10 +3,12 @@ package com.azam.android.salaattimes;
 import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
+import androidx.fragment.app.FragmentTransaction;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -44,7 +46,7 @@ import java.util.Calendar;
 import java.util.List;
 
 
-public class SalaatTimesActivity extends Activity {
+public class SalaatTimesActivity extends FragmentActivity {
 
     private static final int MY_PERMISSION_REQUEST_LOCATION = 100;
     private static final String LOG_TAG = "salaat_times_activity";
@@ -55,6 +57,7 @@ public class SalaatTimesActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_salaat_times);
         NotificationPublisher.initializeChannels(this);
+        makeSureExactAlarmPermission();
     }
 
     @Override
@@ -62,17 +65,58 @@ public class SalaatTimesActivity extends Activity {
         super.onResume();
         NotificationPublisher.cancel(this);
         currentDay = Calendar.getInstance();
-        getFragmentManager().beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, SalaatTimeFragment.newInstance(Calendar.getInstance(), getCity()))
                 .commit();
+        makeSureExactAlarmPermission();
         scheduleNotification();
-
     }
 
+    protected void makeSureExactAlarmPermission() {
+        boolean hasExactAlarmPermission = true;
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            hasExactAlarmPermission = alarmManager.canScheduleExactAlarms();
+        }
+        if (!hasExactAlarmPermission) {
+            showAlarmPermissionDialog();
+        }
+
+    }
+    public void showAlarmPermissionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Permission Required");
+        builder.setMessage("To ensure Salaat notifications are triggered at the exact time, this app needs permission to schedule exact alarms. Please grant this permission in the next screen.");
+
+        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                // Intent to navigate the user to the system settings for exact alarm permission
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    startActivity(intent);
+                }
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
     private String getCity() {
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
+        if (preferences!=null)
+            return preferences.getString("city", "London");
+        else return "London";
 
-        return preferences.getString("city", "London");
     }
 
     private void scheduleNotification() {
@@ -205,6 +249,7 @@ public class SalaatTimesActivity extends Activity {
                 break;
             case R.id.action_uselocation:
                 city = "uselocation";
+                citySelected = false;
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage(R.string.location_dialog_message)
                         .setTitle(R.string.location_dialog_title);
@@ -216,7 +261,9 @@ public class SalaatTimesActivity extends Activity {
                         if (ContextCompat.checkSelfPermission(SalaatTimesActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                             ActivityCompat.requestPermissions(SalaatTimesActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
                         }
-
+                        cityChosen("uselocation");
+                        item.setChecked(true);
+                        Log.i(LOG_TAG, "ok button clicked from gps location dialog");
                     }
                 });
                 builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -295,7 +342,7 @@ public class SalaatTimesActivity extends Activity {
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
         preferences.edit().putString("city", city).commit();
         Log.i(LOG_TAG, "City chosen " + city);
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.replace(R.id.container, SalaatTimeFragment.newInstance(currentDay, city));
         ft.commit();
@@ -319,7 +366,7 @@ public class SalaatTimesActivity extends Activity {
     public void changeDay(Calendar day) {
         currentDay = day;
         Log.i(LOG_TAG, "Date changed");
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.replace(R.id.container, SalaatTimeFragment.newInstance(day, getCity()));
         ft.commit();
@@ -389,13 +436,13 @@ public class SalaatTimesActivity extends Activity {
             return false;
         }
 
-        private void setDate(final View rootView) {
-            SalaatTimes salaatTimes = SalaatTimes.build(getActivity());
+        private void setDate(final View rootView, Context context) {
+            SalaatTimes salaatTimes = SalaatTimes.build(context);
             Calendar day = getCalendar();
             String city = getCity();
             try {
                 Entry entry = salaatTimes.getEntry(day, city);
-                Salaat nextSalaat = salaatTimes.getNextSalaat(getActivity(), Calendar.getInstance());
+                Salaat nextSalaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
                 for(int viewId : new int[]{
                         R.id.imsaak_value,
                         R.id.fajr_value,
@@ -412,7 +459,7 @@ public class SalaatTimesActivity extends Activity {
                         // should never get here
                     }
                 }
-                if (isAdded() && getActivity() != null) {
+                if (isAdded() && context != null) {
 
                     resetColors(rootView);
                     TextView t = (TextView) rootView.findViewById(R.id.provider);
@@ -431,7 +478,7 @@ public class SalaatTimesActivity extends Activity {
                             // Define a listener that responds to location updates
                             LocationListener locationListener = new LocationListener() {
                                 public void onLocationChanged(Location location) {
-                                    setDate(rootView);
+                                    setDate(rootView, context);
                                     LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
                                     lm.removeUpdates(this);
                                 }
@@ -463,9 +510,8 @@ public class SalaatTimesActivity extends Activity {
                     }
                 }
             } catch (SecurityException e) {
-                Activity context = getActivity();
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
                 }
             } finally {
                 salaatTimes.close();
@@ -527,7 +573,7 @@ public class SalaatTimesActivity extends Activity {
                 Bundle savedInstanceState) {
             final View rootView = inflater.inflate(R.layout.fragment_salaat_times, container, false);
             Context c = rootView.getContext();
-            setDate(rootView);
+            setDate(rootView, c.getApplicationContext());
             rootView.setOnTouchListener(new OnSwipeTouchListener(c) {
                 @Override
                 public void onSwipeLeft() {
