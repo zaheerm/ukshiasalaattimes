@@ -58,6 +58,7 @@ public class SalaatTimesActivity extends FragmentActivity {
         setContentView(R.layout.activity_salaat_times);
         NotificationPublisher.initializeChannels(this);
         makeSureExactAlarmPermission();
+        updateAllWidgets(this);
     }
 
     @Override
@@ -68,21 +69,26 @@ public class SalaatTimesActivity extends FragmentActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, SalaatTimeFragment.newInstance(Calendar.getInstance(), getCity()))
                 .commit();
-        makeSureExactAlarmPermission();
-        scheduleNotification();
+        if (hasExactAlarmPermission()) scheduleNotification();
+        else makeSureExactAlarmPermission();
+
     }
 
-    protected void makeSureExactAlarmPermission() {
+    private boolean hasExactAlarmPermission() {
         boolean hasExactAlarmPermission = true;
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             hasExactAlarmPermission = alarmManager.canScheduleExactAlarms();
         }
+        return hasExactAlarmPermission;
+    }
+    protected void makeSureExactAlarmPermission() {
+        boolean hasExactAlarmPermission = hasExactAlarmPermission();
+
         if (!hasExactAlarmPermission) {
             showAlarmPermissionDialog();
         }
-
     }
     public void showAlarmPermissionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -96,6 +102,7 @@ public class SalaatTimesActivity extends FragmentActivity {
                 // Intent to navigate the user to the system settings for exact alarm permission
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                     Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    intent.setData(Uri.parse("package:" + getPackageName()));  // Include package name
                     startActivity(intent);
                 }
             }
@@ -202,6 +209,7 @@ public class SalaatTimesActivity extends FragmentActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case MY_PERMISSION_REQUEST_LOCATION: {
                 // If request is cancelled, the result arrays are empty.
@@ -232,7 +240,7 @@ public class SalaatTimesActivity extends FragmentActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         boolean citySelected = true;
-        String city = null;
+        String city = "London";
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
         switch (id) {
             case R.id.action_london:
@@ -347,22 +355,27 @@ public class SalaatTimesActivity extends FragmentActivity {
         ft.replace(R.id.container, SalaatTimeFragment.newInstance(currentDay, city));
         ft.commit();
         scheduleNotification();
-        SalaatTimes salaatTimes = SalaatTimes.build(this);
+        updateAllWidgets(this);
+    }
+
+    public static void updateAllWidgets(Context context) {
+        SalaatTimes salaatTimes = SalaatTimes.build(context);
         Salaat salaat = null;
         try {
-            salaat = salaatTimes.getNextSalaat(this, Calendar.getInstance());
+            salaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
         } catch (SecurityException e) {}
         salaatTimes.close();
         if (salaat != null) {
-            RemoteViews views = new RemoteViews(getPackageName(), R.layout.single_salaat_app_widget);
-            views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());
-            views.setTextViewText(R.id.nextsalaat_value, salaat.getSalaatTimeAsString());
-            AppWidgetManager manager = AppWidgetManager.getInstance(this);
-            ComponentName thisWidget = new ComponentName(this, SingleSalaatAppWidget.class);
-            manager.updateAppWidget(thisWidget, views);
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            ComponentName thisWidget = new ComponentName(context, SingleSalaatAppWidget.class);
+            // Get all widget IDs for this widget class
+            int[] appWidgetIds = manager.getAppWidgetIds(thisWidget);
+            for (int widgetId : appWidgetIds) {
+                Log.i(LOG_TAG, "Getting app widget to update: " + widgetId);
+                SingleSalaatAppWidget.updateAppWidget(context, manager, widgetId, salaat);
+            }
         }
     }
-
     public void changeDay(Calendar day) {
         currentDay = day;
         Log.i(LOG_TAG, "Date changed");

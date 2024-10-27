@@ -6,9 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
-import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,7 +18,6 @@ import androidx.core.app.NotificationCompat;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.RemoteViews;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -87,14 +84,7 @@ public class NotificationPublisher extends BroadcastReceiver {
             Log.w(LOG_TAG, "Next salaat happens to be the same: " + salaat.getSalaatName());
             return;
         }
-        if (salaat != null) {
-            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.single_salaat_app_widget);
-            views.setTextViewText(R.id.nextsalaat_label, salaat.getSalaatName());
-            views.setTextViewText(R.id.nextsalaat_value, salaat.getSalaatTimeAsString());
-            AppWidgetManager manager = AppWidgetManager.getInstance(context);
-            ComponentName thisWidget = new ComponentName(context, SingleSalaatAppWidget.class);
-            manager.updateAppWidget(thisWidget, views);
-        }
+        SalaatTimesActivity.updateAllWidgets(context);
         SharedPreferences preferences = context.getSharedPreferences("salaat", 0);
         Uri adhanUri = Uri.parse("android.resource://"
                 + context.getPackageName() + "/" + R.raw.azan);

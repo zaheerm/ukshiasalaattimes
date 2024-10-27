@@ -29,7 +29,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private Context myContext = null;
 
-    private static int CURRENT_VERSION = 7;
+    private static int CURRENT_VERSION = 8;
     /**
      * Constructor
      * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
