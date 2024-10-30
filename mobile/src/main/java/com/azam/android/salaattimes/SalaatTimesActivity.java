@@ -3,6 +3,10 @@ package com.azam.android.salaattimes;
 import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import android.app.AlarmManager;
@@ -25,7 +29,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.util.Log;
@@ -36,7 +42,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
-import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -52,28 +57,68 @@ public class SalaatTimesActivity extends FragmentActivity {
     private static final String LOG_TAG = "salaat_times_activity";
     private Menu optionsMenu;
     private Calendar currentDay;
+    private AlertDialog notificationDialog;
+    private AlertDialog alarmDialog;
+    // ActivityResultLauncher for settings
+    private final ActivityResultLauncher<Intent> settingsLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            });
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_salaat_times);
         NotificationPublisher.initializeChannels(this);
         makeSureExactAlarmPermission();
+        makeSureNotificationsEnabled();
         updateAllWidgets(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(LOG_TAG, "onResume()");
         NotificationPublisher.cancel(this);
+        dismissDialogs();
         currentDay = Calendar.getInstance();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, SalaatTimeFragment.newInstance(Calendar.getInstance(), getCity()))
                 .commit();
         if (hasExactAlarmPermission()) scheduleNotification();
         else makeSureExactAlarmPermission();
-
+        makeSureNotificationsEnabled();
     }
 
+    private void dismissDialogs() {
+        Log.d(LOG_TAG, "Dismissing dialogs " + notificationDialog + " and " + alarmDialog);
+        if (notificationDialog != null) {
+            Log.d(LOG_TAG, "Notification dialog showing");
+            if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+                Log.d(LOG_TAG, "Notifications are enabled so dismissing dialog.");
+                notificationDialog.dismiss();
+                notificationDialog = null;
+            } else {
+                Log.w(LOG_TAG, "Notifications are still not enabled so not dismissing dialog.");
+            }
+        }
+        if (alarmDialog != null) {
+            Log.d(LOG_TAG, "Alarm dialog showing");
+            if (hasExactAlarmPermission()) {
+                Log.d(LOG_TAG, "Exact alarms are enabled so dismissing dialog.");
+                alarmDialog.dismiss();
+                alarmDialog = null;
+            } else {
+                Log.w(LOG_TAG, "Exact alarms are still not enabled so not dismissing dialog.");
+            }
+        }
+    }
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            Log.d(LOG_TAG, "Window focus regained.");
+            dismissDialogs();
+        }
+    }
     private boolean hasExactAlarmPermission() {
         boolean hasExactAlarmPermission = true;
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -91,32 +136,63 @@ public class SalaatTimesActivity extends FragmentActivity {
         }
     }
     public void showAlarmPermissionDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Permission Required");
-        builder.setMessage("To ensure Salaat notifications are triggered at the exact time, this app needs permission to schedule exact alarms. Please grant this permission in the next screen.");
+        Intent intent = null;
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent = null; // USE_EXACT_ALARM is guaranteed (SCHEDULE_EXACT_ALARM is what can be revoked by the user)
+        }
+        else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        }
+        if (intent != null) {
+            final Intent finalIntent = intent;
+            alarmDialog = new AlertDialog.Builder(this)
+                    .setTitle("Enable Alarm Permissions")
+                    .setMessage("To ensure Salaat notifications are triggered at the exact time, this app needs permission to schedule exact alarms. Please grant this permission in the next screen.")
+                    .setPositiveButton("Go to Settings", (dialog, which) -> {
+                        settingsLauncher.launch(finalIntent);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .setCancelable(false)
+                    .create();
+            alarmDialog.show();
+        }
+    }
 
-        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                // Intent to navigate the user to the system settings for exact alarm permission
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                    intent.setData(Uri.parse("package:" + getPackageName()));  // Include package name
-                    startActivity(intent);
-                }
+    public void makeSureNotificationsEnabled() {
+        final boolean areNotificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled();
+        if (!areNotificationsEnabled) {
+            Intent intent = null;
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, this.getPackageName());
+            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                intent = new Intent("android.settings.APP_NOTIFICATION_SETTINGS");
+
+                intent.putExtra("app_package", this.getPackageName());
+                intent.putExtra("app_uid", this.getApplicationInfo().uid);
+            } else {
+                intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.setData(Uri.parse("package:" + this.getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             }
-        });
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
+            final Intent finalIntent = intent;
+            notificationDialog = new AlertDialog.Builder(this)
+                    .setTitle("Enable Notifications")
+                    .setMessage("Notifications are disabled. Please enable them in settings to receive important updates.")
+                    .setPositiveButton("Go to Settings", (dialog, which) -> {
+                        settingsLauncher.launch(finalIntent);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .setCancelable(false)
+                    .create();
+            Log.d(LOG_TAG, "Showing notification dialog " + notificationDialog);
+            notificationDialog.show();
+        }
     }
     private String getCity() {
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
@@ -383,9 +459,30 @@ public class SalaatTimesActivity extends FragmentActivity {
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.replace(R.id.container, SalaatTimeFragment.newInstance(day, getCity()));
         ft.commit();
-
     }
 
+    public static void cacheLocation(Context context, Location location) {
+        SharedPreferences prefs = context.getSharedPreferences("location_cache", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putFloat("latitude", (float) location.getLatitude());
+        editor.putFloat("longitude", (float) location.getLongitude());
+        editor.putLong("timestamp", location.getTime());
+        editor.apply();
+        Log.d(LOG_TAG, "cacheLocation caching: " + location);
+    }
+
+    public static Location getCachedLocation(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("location_cache", Context.MODE_PRIVATE);
+        if (prefs.contains("latitude") && prefs.contains("longitude")) {
+            Location location = new Location(LocationManager.GPS_PROVIDER);
+            location.setLatitude(prefs.getFloat("latitude", 0));
+            location.setLongitude(prefs.getFloat("longitude", 0));
+            location.setTime(prefs.getLong("timestamp", 0));
+            Log.d(LOG_TAG, "getCachedLocation returning: " + location);
+            return location;
+        }
+        return null; // No cached location available
+    }
     /**
      * A placeholder fragment containing a simple view.
      */

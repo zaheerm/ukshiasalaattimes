@@ -86,6 +86,10 @@ public class Entry {
         return hour_str + ":" + minute;
     }
 
+    @Override
+    public String toString() {
+        return "Fajr: " + fajr + " Zohr: " + zohr + " Maghrib: " + maghrib;
+    }
     private String imsaak;
     private String fajr;
     private String sunrise;

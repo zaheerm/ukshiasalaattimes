@@ -53,7 +53,13 @@ public class SalaatTimes {
                 bestLocation = l;
             }
         }
-        return bestLocation;
+        if (bestLocation == null) {
+            Location cachedLocation = SalaatTimesActivity.getCachedLocation(context);
+            return cachedLocation;
+        } else {
+            SalaatTimesActivity.cacheLocation(context, bestLocation);
+            return bestLocation;
+        }
     }
 
     public static SalaatTimes build(Context context) {
@@ -184,6 +190,7 @@ public class SalaatTimes {
         Entry entry = getEntry(now, city);
         try {
             if (entry != null) {
+                Log.d(LOG_TAG, "Salaat entry for the day is: " + entry);
                 for (int viewId : new int[]{
                         R.id.fajr_value,
                         R.id.zohr_value,
@@ -216,7 +223,10 @@ public class SalaatTimes {
                     }
 
                 }
-            } else return null;
+            } else {
+                Log.w(LOG_TAG, "Salaat entry for the day is null");
+                return null;
+            }
             if (!found) {
                 try {
                     String salaatTime = entry.getSalaat(R.id.tomorrowfajr_value);
@@ -237,6 +247,7 @@ public class SalaatTimes {
                     }
 
                 } catch (Exception e) {
+                    Log.e(LOG_TAG, "got exception while trying to figure out next salaat", e);
                     return null;
                 }
 
