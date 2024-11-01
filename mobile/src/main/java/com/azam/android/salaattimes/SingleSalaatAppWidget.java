@@ -10,6 +10,8 @@ import android.widget.RemoteViews;
 
 import java.util.Calendar;
 
+import io.sentry.Sentry;
+
 
 /**
  * Implementation of App Widget functionality.
@@ -24,7 +26,9 @@ public class SingleSalaatAppWidget extends AppWidgetProvider {
         Salaat salaat = null;
         try {
             salaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
-        } catch (SecurityException e) {}
+        } catch (SecurityException e) {
+            Sentry.captureException(e);
+        }
         if (salaat != null) salaatTimes.scheduleNextSalaatNotification(context);
         salaatTimes.close();
 

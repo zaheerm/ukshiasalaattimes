@@ -3,7 +3,6 @@ package com.azam.android.salaattimes;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -14,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import io.sentry.Sentry;
+
 /**
  * Created by zaheer on 9/14/14.
  */
@@ -21,15 +22,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     //The Android's default system path of your application database.
 
-    private static String DB_PATH_SUFFIX = "/databases/";
-
-    private static String DB_NAME = "salaattimes";
+    private static final String DB_NAME = "salaattimes";
 
     private SQLiteDatabase myDataBase;
 
-    private Context myContext = null;
+    private final Context myContext;
 
-    private static int CURRENT_VERSION = 8;
     /**
      * Constructor
      * Takes and keeps a reference of the passed context in order to access to the application assets and resources.
@@ -42,6 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private String getDatabaseFilename() throws PackageManager.NameNotFoundException {
+        String DB_PATH_SUFFIX = "/databases/";
         return this.myContext.getPackageManager().getPackageInfo(myContext.getPackageName(), 0).applicationInfo.dataDir + DB_PATH_SUFFIX + DB_NAME;
     }
 
@@ -68,7 +67,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 copyDataBase();
 
             } catch (IOException e) {
-
+                Sentry.captureException(e);
                 throw new RuntimeException("Error copying database: " + e);
 
             }
@@ -101,6 +100,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
                 else {
                     version_cursor.moveToFirst();
+                    int CURRENT_VERSION = 8;
                     if (version_cursor.getInt(0) < CURRENT_VERSION) {
                         recent = false;
                     }
@@ -109,11 +109,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             }
         }catch(SQLiteException e){
-
+            Sentry.captureException(e);
             //database does't exist yet.
 
         }
         catch (PackageManager.NameNotFoundException e) {
+            Sentry.captureException(e);
             throw new Error("Cannot find name");
         }
 
@@ -123,7 +124,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         }
 
-        return (checkDB != null && recent) ? true : false;
+        return checkDB != null && recent;
     }
 
     /**
@@ -162,8 +163,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             Log.i("DatabaseHelper", "copy db complete");
 
         }
-        catch (PackageManager.NameNotFoundException e) { throw new Error("Cannot find name");}
-
+        catch (PackageManager.NameNotFoundException e) {
+            Sentry.captureException(e);
+            throw new Error("Cannot find name");
+        }
     }
 
     public void openDataBase() {

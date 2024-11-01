@@ -11,9 +11,12 @@ public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i("bootreceiver", "At boot, scheduling next salaat");
-        SalaatTimes salaatTimes = SalaatTimes.build(context);
-        salaatTimes.scheduleNextSalaatNotification(context);
-        salaatTimes.close();
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            Log.i("bootreceiver", "At boot, scheduling next salaat");
+            SalaatTimes salaatTimes = SalaatTimes.build(context);
+            salaatTimes.scheduleNextSalaatNotification(context);
+            salaatTimes.close();
+            SalaatTimesActivity.updateAllWidgets(context);
+        }
     }
 }

@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.TimeZone;
-
 public class ComputedSalaatTimes {
 
     // ---------------------- Global Variables --------------------
@@ -67,12 +65,12 @@ public class ComputedSalaatTimes {
     private int Time12NS; // 12-hour format with no suffix
     private int Floating; // floating point number
     // Time Names
-    private ArrayList<String> timeNames;
-    private String InvalidTime; // The string used for invalid times
+    private final ArrayList<String> timeNames;
+    private final String InvalidTime; // The string used for invalid times
     // --------------------- Technical Settings --------------------
     private int numIterations; // number of iterations needed to compute times
     // ------------------- Calc Method Parameters --------------------
-    private HashMap<Integer, double[]> methodParams;
+    private final HashMap<Integer, double[]> methodParams;
 
     /*
      * this.methodParams[methodNum] = new Array(fa, ms, mv, is, iv);
@@ -82,8 +80,7 @@ public class ComputedSalaatTimes {
      * selector (0 = angle; 1 = minutes after maghrib) iv : isha parameter value
      * (in angle or minutes)
      */
-    private double[] prayerTimesCurrent;
-    private int[] offsets;
+    private final int[] offsets;
 
     public ComputedSalaatTimes() {
         // Initialize vars
@@ -121,7 +118,7 @@ public class ComputedSalaatTimes {
         this.setFloating(3); // floating point number
 
         // Time Names
-        timeNames = new ArrayList<String>();
+        timeNames = new ArrayList<>();
         timeNames.add("Fajr");
         timeNames.add("Sunrise");
         timeNames.add("Dhuhr");
@@ -156,39 +153,39 @@ public class ComputedSalaatTimes {
          * selector (0 = angle; 1 = minutes after maghrib) iv : isha parameter
          * value (in angle or minutes)
          */
-        methodParams = new HashMap<Integer, double[]>();
+        methodParams = new HashMap<>();
 
         // Jafari
         double[] Jvalues = {16,0,4,0,14};
-        methodParams.put(Integer.valueOf(this.getJafari()), Jvalues);
+        methodParams.put(this.getJafari(), Jvalues);
 
         // Karachi
         double[] Kvalues = {18,1,0,0,18};
-        methodParams.put(Integer.valueOf(this.getKarachi()), Kvalues);
+        methodParams.put(this.getKarachi(), Kvalues);
 
         // ISNA
         double[] Ivalues = {15,1,0,0,15};
-        methodParams.put(Integer.valueOf(this.getISNA()), Ivalues);
+        methodParams.put(this.getISNA(), Ivalues);
 
         // MWL
         double[] MWvalues = {18,1,0,0,17};
-        methodParams.put(Integer.valueOf(this.getMWL()), MWvalues);
+        methodParams.put(this.getMWL(), MWvalues);
 
         // Makkah
         double[] MKvalues = {18.5,1,0,1,90};
-        methodParams.put(Integer.valueOf(this.getMakkah()), MKvalues);
+        methodParams.put(this.getMakkah(), MKvalues);
 
         // Egypt
         double[] Evalues = {19.5,1,0,0,17.5};
-        methodParams.put(Integer.valueOf(this.getEgypt()), Evalues);
+        methodParams.put(this.getEgypt(), Evalues);
 
         // Tehran
         double[] Tvalues = {17.7,0,4.5,0,14};
-        methodParams.put(Integer.valueOf(this.getTehran()), Tvalues);
+        methodParams.put(this.getTehran(), Tvalues);
 
         // Custom
         double[] Cvalues = {18,1,0,0,17};
-        methodParams.put(Integer.valueOf(this.getCustom()), Cvalues);
+        methodParams.put(this.getCustom(), Cvalues);
 
     }
 
@@ -247,12 +244,6 @@ public class ComputedSalaatTimes {
         return radiansToDegrees(val);
     }
 
-    // degree arctan
-    private double darctan(double x) {
-        double val = Math.atan(x);
-        return radiansToDegrees(val);
-    }
-
     // degree arctan2
     private double darctan2(double y, double x) {
         double val = Math.atan2(y, x);
@@ -265,28 +256,6 @@ public class ComputedSalaatTimes {
         return radiansToDegrees(val);
     }
 
-    // ---------------------- Time-Zone Functions -----------------------
-    // compute local time-zone for a specific date
-    private double getTimeZone1() {
-        TimeZone timez = TimeZone.getDefault();
-        double hoursDiff = (timez.getRawOffset() / 1000.0) / 3600;
-        return hoursDiff;
-    }
-
-    // compute base time-zone of the system
-    private double getBaseTimeZone() {
-        TimeZone timez = TimeZone.getDefault();
-        double hoursDiff = (timez.getRawOffset() / 1000.0) / 3600;
-        return hoursDiff;
-
-    }
-
-    // detect daylight saving in a given date
-    private double detectDaylightSaving() {
-        TimeZone timez = TimeZone.getDefault();
-        double hoursDiff = timez.getDSTSavings();
-        return hoursDiff;
-    }
 
     // ---------------------- Julian Date Functions -----------------------
     // calculate julian date from a calendar date
@@ -300,22 +269,8 @@ public class ComputedSalaatTimes {
 
         double B = 2 - A + Math.floor(A / 4.0);
 
-        double JD = Math.floor(365.25 * (year + 4716))
+        return Math.floor(365.25 * (year + 4716))
                 + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
-
-        return JD;
-    }
-
-    // convert a calendar date to julian date (second method)
-    private double calcJD(int year, int month, int day) {
-        double J1970 = 2440588.0;
-        Date date = new Date(year, month - 1, day);
-
-        double ms = date.getTime(); // # of milliseconds since midnight Jan 1,
-        // 1970
-        double days = Math.floor(ms / (1000.0 * 60.0 * 60.0 * 24.0));
-        return J1970 + days - 0.5;
-
     }
 
     // ---------------------- Calculation Functions -----------------------
@@ -346,21 +301,18 @@ public class ComputedSalaatTimes {
 
     // compute equation of time
     private double equationOfTime(double jd) {
-        double eq = sunPosition(jd)[1];
-        return eq;
+        return sunPosition(jd)[1];
     }
 
     // compute declination angle of sun
     private double sunDeclination(double jd) {
-        double d = sunPosition(jd)[0];
-        return d;
+        return sunPosition(jd)[0];
     }
 
     // compute mid-day (Dhuhr, Zawal) time
     private double computeMidDay(double t) {
         double T = equationOfTime(this.getJDate() + t);
-        double Z = fixhour(12 - T);
-        return Z;
+        return fixhour(12 - T);
     }
 
     // compute time for a given angle G
@@ -503,10 +455,7 @@ public class ComputedSalaatTimes {
             suffix = "am";
         }
         hours = ((((hours+ 12) -1) % (12))+ 1);
-        /*hours = (hours + 12) - 1;
-        int hrs = (int) hours % 12;
-        hrs += 1;*/
-        if (noSuffix == false) {
+        if (!noSuffix) {
             if ((hours >= 0 && hours <= 9) && (minutes >= 0 && minutes <= 9)) {
                 result = "0" + hours + ":0" + Math.round(minutes) + " "
                         + suffix;
@@ -558,9 +507,7 @@ public class ComputedSalaatTimes {
         double Isha = this.computeTime(
                 methodParams.get(this.getCalcMethod())[4], t[6]);
 
-        double[] CTimes = {Fajr, Sunrise, Dhuhr, Asr, Sunset, Maghrib, Isha};
-
-        return CTimes;
+        return new double[]{Fajr, Sunrise, Dhuhr, Asr, Sunset, Maghrib, Isha};
 
     }
 
@@ -584,7 +531,7 @@ public class ComputedSalaatTimes {
             times[i] += this.getTimeZone() - this.getLng() / 15;
         }
 
-        times[2] += this.getDhuhrMinutes() / 60; // Dhuhr
+        times[2] += (double) this.getDhuhrMinutes() / 60; // Dhuhr
         if (methodParams.get(this.getCalcMethod())[1] == 1) // Maghrib
         {
             times[5] = times[4] + methodParams.get(this.getCalcMethod())[2]/ 60;
@@ -604,7 +551,7 @@ public class ComputedSalaatTimes {
     // convert times array to given time format
     private ArrayList<String> adjustTimesFormat(double[] times) {
 
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
 
         if (this.getTimeFormat() == this.getFloating()) {
             for (double time : times) {
@@ -679,13 +626,12 @@ public class ComputedSalaatTimes {
     // Set time offsets
     public void tune(int[] offsetTimes) {
 
-        for (int i = 0; i < offsetTimes.length; i++) { // offsetTimes length
-            // should be 7 in order
-            // of Fajr, Sunrise,
-            // Dhuhr, Asr, Sunset,
-            // Maghrib, Isha
-            this.offsets[i] = offsetTimes[i];
-        }
+        // offsetTimes length
+        // should be 7 in order
+        // of Fajr, Sunrise,
+        // Dhuhr, Asr, Sunset,
+        // Maghrib, Isha
+        System.arraycopy(offsetTimes, 0, this.offsets, 0, offsetTimes.length);
     }
 
     private double[] tuneTimes(double[] times) {

@@ -2,7 +2,6 @@ package com.azam.android.salaattimes;
 
 import android.Manifest;
 import android.app.ActionBar;
-import android.app.Activity;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -16,7 +15,6 @@ import androidx.fragment.app.FragmentTransaction;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -26,11 +24,14 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -47,8 +48,13 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import io.sentry.Sentry;
 
 
 public class SalaatTimesActivity extends FragmentActivity {
@@ -91,9 +97,9 @@ public class SalaatTimesActivity extends FragmentActivity {
     private void dismissDialogs() {
         Log.d(LOG_TAG, "Dismissing dialogs " + notificationDialog + " and " + alarmDialog);
         if (notificationDialog != null) {
-            Log.d(LOG_TAG, "Notification dialog showing");
+            Log.d(LOG_TAG, "Notification dialog " + notificationDialog + " showing");
             if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
-                Log.d(LOG_TAG, "Notifications are enabled so dismissing dialog.");
+                Log.d(LOG_TAG, "Notifications are enabled so dismissing dialog" + notificationDialog);
                 notificationDialog.dismiss();
                 notificationDialog = null;
             } else {
@@ -137,32 +143,33 @@ public class SalaatTimesActivity extends FragmentActivity {
     }
     public void showAlarmPermissionDialog() {
         Intent intent = null;
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent = null; // USE_EXACT_ALARM is guaranteed (SCHEDULE_EXACT_ALARM is what can be revoked by the user)
-        }
-        else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+                android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
             intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
         }
         if (intent != null) {
             final Intent finalIntent = intent;
-            alarmDialog = new AlertDialog.Builder(this)
-                    .setTitle("Enable Alarm Permissions")
-                    .setMessage("To ensure Salaat notifications are triggered at the exact time, this app needs permission to schedule exact alarms. Please grant this permission in the next screen.")
-                    .setPositiveButton("Go to Settings", (dialog, which) -> {
-                        settingsLauncher.launch(finalIntent);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .setCancelable(false)
-                    .create();
-            alarmDialog.show();
+            if (alarmDialog == null) {
+                alarmDialog = new AlertDialog.Builder(this)
+                        .setTitle("Enable Alarm Permissions")
+                        .setMessage("To ensure Salaat notifications are triggered at the exact time, this app needs permission to schedule exact alarms. Please grant this permission in the next screen.")
+                        .setPositiveButton("Go to Settings", (dialog, which) -> settingsLauncher.launch(finalIntent))
+                        .setNegativeButton("Cancel", null)
+                        .setCancelable(false)
+                        .create();
+                alarmDialog.show();
+            } else {
+                Log.d(LOG_TAG, "not showing alarm dialog as already being shown");
+            }
         }
     }
 
     public void makeSureNotificationsEnabled() {
         final boolean areNotificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled();
         if (!areNotificationsEnabled) {
-            Intent intent = null;
+            Log.d(LOG_TAG, "Notifications are not enabled");
+            Intent intent;
 
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -181,17 +188,22 @@ public class SalaatTimesActivity extends FragmentActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             }
             final Intent finalIntent = intent;
-            notificationDialog = new AlertDialog.Builder(this)
-                    .setTitle("Enable Notifications")
-                    .setMessage("Notifications are disabled. Please enable them in settings to receive important updates.")
-                    .setPositiveButton("Go to Settings", (dialog, which) -> {
-                        settingsLauncher.launch(finalIntent);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .setCancelable(false)
-                    .create();
-            Log.d(LOG_TAG, "Showing notification dialog " + notificationDialog);
-            notificationDialog.show();
+            if (notificationDialog == null) {
+                notificationDialog = new AlertDialog.Builder(this)
+                        .setTitle("Enable Notifications")
+                        .setMessage("Notifications are disabled. Please enable them in settings to be notified when it is salaat time.")
+                        .setPositiveButton("Go to Settings", (dialog, which) -> settingsLauncher.launch(finalIntent))
+                        .setNegativeButton("Cancel", null)
+                        .setCancelable(false)
+                        .create();
+                Log.d(LOG_TAG, "Showing notification dialog " + notificationDialog);
+                notificationDialog.show();
+            }
+            else {
+                Log.d(LOG_TAG, "Not showing notification dialog as already showing");
+            }
+        } else {
+            Log.d(LOG_TAG, "No need to show notification dialog because notifications are enabled");
         }
     }
     private String getCity() {
@@ -220,18 +232,16 @@ public class SalaatTimesActivity extends FragmentActivity {
         getMenuInflater().inflate(R.menu.salaat_times, menu);
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
         boolean allSalaatNotify = preferences.getBoolean("nextsalaatnotify", true);
-        MenuItem item = null;
+        MenuItem item;
         String city = getCity();
-        if (city.equals("London"))
-            item = menu.findItem(R.id.action_london);
-        else if (city.equals("Birmingham"))
-            item = menu.findItem(R.id.action_birmingham);
-        else if (city.equals("Peterborough"))
-            item = menu.findItem(R.id.action_peterborough);
-        else if (city.equals("Leicester"))
-            item = menu.findItem(R.id.action_leicester);
-        else if (city.equals("uselocation"))
-            item = menu.findItem(R.id.action_uselocation);
+        item = switch (city) {
+            case "London" -> menu.findItem(R.id.action_london);
+            case "Birmingham" -> menu.findItem(R.id.action_birmingham);
+            case "Peterborough" -> menu.findItem(R.id.action_peterborough);
+            case "Leicester" -> menu.findItem(R.id.action_leicester);
+            case "uselocation" -> menu.findItem(R.id.action_uselocation);
+            default -> null;
+        };
         if (item == null) Log.w(LOG_TAG, "Did not find menu item");
         else item.setChecked(true);
 
@@ -259,7 +269,6 @@ public class SalaatTimesActivity extends FragmentActivity {
     }
 
     private void adjustAllSalaatNotifications() {
-        SharedPreferences preferences = getSharedPreferences("salaat", 0);
         boolean all_salaat_checked = true;
         for (String salaat: new String[] {"fajr", "zohr", "maghrib"}) {
             MenuItem individual_salaat_item = optionsMenu.findItem(getIdentifierByName("action_"+salaat));
@@ -272,36 +281,31 @@ public class SalaatTimesActivity extends FragmentActivity {
 
     private int getIdentifierByName(String identifier) {
         try {
-            Class res = R.id.class;
+            Class<R.id> res = R.id.class;
             Field field = res.getField(identifier);
-            int id = field.getInt(null);
-            return id;
+            return field.getInt(null);
         }
         catch (Exception e) {
-            Log.e(LOG_TAG, "Failure to get identifier.", e);
+            Sentry.captureException(e);
         }
         return -1;
     }
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case MY_PERMISSION_REQUEST_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    cityChosen("uselocation");
-                    optionsMenu.findItem(R.id.action_uselocation).setChecked(true);
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    cityChosen("London");
-                    optionsMenu.findItem(R.id.action_london).setChecked(true);
-                }
-                return;
+        if (requestCode == MY_PERMISSION_REQUEST_LOCATION) {// If request is cancelled, the result arrays are empty.
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // permission was granted, yay! Do the
+                // contacts-related task you need to do.
+                cityChosen("uselocation");
+                optionsMenu.findItem(R.id.action_uselocation).setChecked(true);
+            } else {
+                // permission denied, boo! Disable the
+                // functionality that depends on this permission.
+                cityChosen("London");
+                optionsMenu.findItem(R.id.action_london).setChecked(true);
             }
 
             // other 'case' lines to check for other
@@ -339,21 +343,17 @@ public class SalaatTimesActivity extends FragmentActivity {
                         .setTitle(R.string.location_dialog_title);
 
                 // Add the buttons
-                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User clicked OK button
-                        if (ContextCompat.checkSelfPermission(SalaatTimesActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                            ActivityCompat.requestPermissions(SalaatTimesActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
-                        }
-                        cityChosen("uselocation");
-                        item.setChecked(true);
-                        Log.i(LOG_TAG, "ok button clicked from gps location dialog");
+                builder.setPositiveButton(R.string.ok, (dialog, id1) -> {
+                    // User clicked OK button
+                    if (ContextCompat.checkSelfPermission(SalaatTimesActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(SalaatTimesActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_LOCATION);
                     }
+                    cityChosen("uselocation");
+                    item.setChecked(true);
+                    Log.i(LOG_TAG, "ok button clicked from gps location dialog");
                 });
-                builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
-                    }
+                builder.setNegativeButton(R.string.cancel, (dialog, id2) -> {
+                    // User cancelled the dialog
                 });
 
 
@@ -424,7 +424,7 @@ public class SalaatTimesActivity extends FragmentActivity {
 
     private void cityChosen(String city) {
         SharedPreferences preferences = getSharedPreferences("salaat", 0);
-        preferences.edit().putString("city", city).commit();
+        preferences.edit().putString("city", city).apply();
         Log.i(LOG_TAG, "City chosen " + city);
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
@@ -517,7 +517,7 @@ public class SalaatTimesActivity extends FragmentActivity {
                     R.id.tomorrowfajr_label
 
             }) {
-                TextView t = (TextView) rootView.findViewById(viewId);
+                TextView t = rootView.findViewById(viewId);
                 t.setTextColor(getResources().getColor(R.color.white));
             }
         }
@@ -535,15 +535,17 @@ public class SalaatTimesActivity extends FragmentActivity {
             return getArguments().getString("city");
         }
 
-        private boolean isNetworkAvailable() {
-            Activity activity = getActivity();
-            if (activity!= null) {
-                ConnectivityManager connectivityManager
-                        = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-                return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        private Boolean isNetworkAvailable() {
+            ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Network nw = connectivityManager.getActiveNetwork();
+                if (nw == null) return false;
+                NetworkCapabilities actNw = connectivityManager.getNetworkCapabilities(nw);
+                return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) || actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
+            } else {
+                NetworkInfo nwInfo = connectivityManager.getActiveNetworkInfo();
+                return nwInfo != null && nwInfo.isConnected();
             }
-            return false;
         }
 
         private void setDate(final View rootView, Context context) {
@@ -562,17 +564,18 @@ public class SalaatTimesActivity extends FragmentActivity {
                         R.id.maghrib_value,
                         R.id.tomorrowfajr_value
                 }) {
-                    TextView t = (TextView)rootView.findViewById(viewId);
+                    TextView t = rootView.findViewById(viewId);
                     try {
                         t.setText(entry.getSalaat(viewId));
                     } catch (Exception e) {
                         // should never get here
+                        Sentry.captureException(e);
                     }
                 }
                 if (isAdded() && context != null) {
 
                     resetColors(rootView);
-                    TextView t = (TextView) rootView.findViewById(R.id.provider);
+                    TextView t = rootView.findViewById(R.id.provider);
                     int provider = R.string.provider_London;
                     if (city.equals("Birmingham")) provider = R.string.provider_Birmingham;
                     if (city.equals("Peterborough")) provider = R.string.provider_Peterborough;
@@ -607,7 +610,41 @@ public class SalaatTimesActivity extends FragmentActivity {
                             LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
                             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
                         }
-                        new GeocoderTask().execute(salaatTimes);
+                        ExecutorService executor = Executors.newSingleThreadExecutor();
+                        Handler handler = new Handler(Looper.getMainLooper());
+
+                        executor.execute(() -> {
+                            //Background work here
+                            String detectedCity;
+                            if (isNetworkAvailable()) {
+                                Geocoder geoCoder = new Geocoder(getActivity());
+                                Location location = salaatTimes.getLastKnownLocation();
+                                if (location != null) {
+                                    try {
+                                        List<Address> list = geoCoder.getFromLocation(location
+                                                .getLatitude(), location.getLongitude(), 1);
+                                        if (list != null & !list.isEmpty()) {
+                                            Address address = list.get(0);
+                                            detectedCity = "GPS: " + address.getLocality();
+                                        } else {
+                                            detectedCity = "GPS Location";
+                                        }
+                                    } catch (IOException e) {
+                                        Sentry.captureException(e);
+                                        detectedCity = "GPS Location";
+                                    }
+                                } else {
+                                    detectedCity = "GPS Location";
+                                }
+                            } else {
+                                detectedCity = "GPS Location";
+                            }
+                            final String finalCity = detectedCity;
+                            handler.post(() -> {
+                                //UI Thread work here
+                                actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + finalCity);
+                            });
+                        });
                     }
                     actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
                     Calendar now = Calendar.getInstance();
@@ -628,52 +665,9 @@ public class SalaatTimesActivity extends FragmentActivity {
             }
         }
 
-        private class GeocoderTask extends AsyncTask<SalaatTimes, String, String> {
-
-            @Override
-            protected String doInBackground(SalaatTimes... params) {
-                String city;
-                if (isNetworkAvailable()) {
-                    SalaatTimes salaatTimes = params[0];
-                    Geocoder geoCoder = new Geocoder(getActivity());
-                    Location location = salaatTimes.getLastKnownLocation();
-                    if (location != null) {
-                        try {
-                            List<Address> list = geoCoder.getFromLocation(location
-                                    .getLatitude(), location.getLongitude(), 1);
-                            if (list != null & list.size() > 0) {
-                                Address address = list.get(0);
-                                city = "GPS: " + address.getLocality();
-                            } else {
-                                city = "GPS Location";
-                            }
-                        } catch (IOException e) {
-                            city = "GPS Location";
-                        }
-                    } else {
-                        city = "GPS Location";
-                    }
-                } else {
-                    city = "GPS Location";
-                }
-                return city;
-            }
-
-            @Override
-            protected void onPostExecute(String city) {
-                super.onPostExecute(city);
-                Activity activity = getActivity();
-                if (activity!=null) {
-                    ActionBar actionBar = getActivity().getActionBar();
-                    Calendar day = getCalendar();
-                    actionBar.setTitle(new SimpleDateFormat("d MMM yyyy").format(day.getTime()) + " - " + city);
-                }
-            }
-        }
-
         private void highlightNextSalaat(View rootView, Salaat nextSalaat) {
             if (nextSalaat != null) {
-                TextView t = (TextView) rootView.findViewById(nextSalaat.getLabel());
+                TextView t = rootView.findViewById(nextSalaat.getLabel());
                 t.setTextColor(getResources().getColor(R.color.green));
             }
         }
@@ -710,6 +704,7 @@ public class SalaatTimesActivity extends FragmentActivity {
                     else if (event.getAction() == MotionEvent.ACTION_UP) {
                         rootView.findViewById(R.id.showLeft).setVisibility(View.INVISIBLE);
                         rootView.findViewById(R.id.showRight).setVisibility(View.INVISIBLE);
+                        v.performClick();
                     }
                     return super.onTouch(v, event);
                 }

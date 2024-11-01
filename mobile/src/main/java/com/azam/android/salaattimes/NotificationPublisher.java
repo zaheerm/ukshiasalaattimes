@@ -25,11 +25,12 @@ import java.util.Calendar;
 
 import static androidx.core.app.NotificationCompat.PRIORITY_HIGH;
 
+import io.sentry.Sentry;
+
 public class NotificationPublisher extends BroadcastReceiver {
 
-    private static String NOTIFICATION_ID = "salaat-notification";
+    private static final String NOTIFICATION_ID = "salaat-notification";
     private final static String LOG_TAG = "salaattimes_notify";
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     public NotificationPublisher() {
     }
@@ -70,17 +71,20 @@ public class NotificationPublisher extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         // ...
         // Obtain the FirebaseAnalytics instance.
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
+        FirebaseAnalytics mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
         String salaat_name = intent.getStringExtra(SalaatTimes.SALAAT_NAME);
+        if (salaat_name != null) salaat_name = "fajr";
         Log.i(LOG_TAG, "Received notification for " + salaat_name);
         SalaatTimes salaatTimes = SalaatTimes.build(context);
         salaatTimes.scheduleNextSalaatNotification(context);
         Salaat salaat = null;
         try {
             salaat = salaatTimes.getNextSalaat(context, Calendar.getInstance());
-        } catch (SecurityException e) {}
+        } catch (SecurityException e) {
+            Sentry.captureException(e);
+        }
         salaatTimes.close();
-        if (salaat != null && salaat.getSalaatName().toLowerCase().equals(salaat_name.toLowerCase())) {
+        if (salaat != null && salaat.getSalaatName().equalsIgnoreCase(salaat_name)) {
             Log.w(LOG_TAG, "Next salaat happens to be the same: " + salaat.getSalaatName());
             return;
         }

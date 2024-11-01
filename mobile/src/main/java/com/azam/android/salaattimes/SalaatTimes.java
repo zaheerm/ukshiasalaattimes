@@ -20,6 +20,8 @@ import android.location.LocationManager;
 
 import androidx.core.app.AlarmManagerCompat;
 
+import io.sentry.Sentry;
+
 /**
  * Created by zaheer on 9/14/14.
  */
@@ -29,9 +31,9 @@ public class SalaatTimes {
     public final static String SALAAT_TIME_STR = "com.azam.android.salaattimes.salaat_time_str";
     public final static String SALAAT_TIME = "com.azam.android.salaattimes.salaat_time";
 
-    private SQLiteOpenHelper openHelper;
+    private final SQLiteOpenHelper openHelper;
 
-    private Context context;
+    private final Context context;
 
     public SalaatTimes(SQLiteOpenHelper openHelper, Context context) {
         this.openHelper = openHelper;
@@ -54,8 +56,7 @@ public class SalaatTimes {
             }
         }
         if (bestLocation == null) {
-            Location cachedLocation = SalaatTimesActivity.getCachedLocation(context);
-            return cachedLocation;
+            return SalaatTimesActivity.getCachedLocation(context);
         } else {
             SalaatTimesActivity.cacheLocation(context, bestLocation);
             return bestLocation;
@@ -106,7 +107,7 @@ public class SalaatTimes {
 
         ArrayList<String> tomorrowPrayerTimes = prayers.getPrayerTimes(tomorrow,
                 latitude, longitude, tomorrowOffset);
-        Entry retVal = new Entry(
+        return new Entry(
                 Entry.computeImsaak(prayerTimes.get(0), dst),
                 Entry.reformatString(prayerTimes.get(0), dst),
                 Entry.reformatString(prayerTimes.get(1), dst),
@@ -114,7 +115,6 @@ public class SalaatTimes {
                 Entry.reformatString(prayerTimes.get(4), dst),
                 Entry.reformatString(prayerTimes.get(5), dst),
                 Entry.reformatString(tomorrowPrayerTimes.get(0), dst));
-        return retVal;
     }
 
     public Entry getEntry(Calendar day, String city) throws SecurityException {
@@ -129,15 +129,9 @@ public class SalaatTimes {
         c.moveToFirst();
         Calendar tomorrow = (Calendar)day.clone();
         tomorrow.add(Calendar.DAY_OF_MONTH, 1);
-        boolean dst = false;
-        if (tz.inDaylightTime(tomorrow.getTime())) {
-            dst = true;
-        }
+        boolean dst = tz.inDaylightTime(tomorrow.getTime());
         String tomorrowFajr = Entry.reformatString(c.getString(6), dst);
-        dst = false;
-        if (tz.inDaylightTime(day.getTime())) {
-            dst = true;
-        }
+        dst = tz.inDaylightTime(day.getTime());
         Entry retVal = new Entry(
                 Entry.reformatImsaak(city, c.getString(0), dst),
                 Entry.reformatString(c.getString(1), dst),
@@ -146,6 +140,7 @@ public class SalaatTimes {
                 Entry.reformatString(c.getString(4), dst),
                 Entry.reformatString(c.getString(5), dst),
                 tomorrowFajr);
+        c.close();
         db.close();
         return retVal;
     }
@@ -161,7 +156,7 @@ public class SalaatTimes {
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             long futureInMillis = nextSalaat.getSalaatTime().getTimeInMillis();
-            Log.i(LOG_TAG, "Scheduling next notification for " + String.valueOf(futureInMillis) + " ( " + nextSalaat.toString() + " )");
+            Log.i(LOG_TAG, "Scheduling next notification for " + futureInMillis + " ( " + nextSalaat + " )");
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             // Cancel existing alarms with same intent
             alarmManager.cancel(pendingIntent);
@@ -198,27 +193,23 @@ public class SalaatTimes {
                 }) {
                     String salaatTime = entry.getSalaat(viewId);
                     String[] time_split = salaatTime.split(":");
-                    int hour = Integer.valueOf(time_split[0]);
-                    int minute = Integer.valueOf(time_split[1]);
+                    int hour = Integer.parseInt(time_split[0]);
+                    int minute = Integer.parseInt(time_split[1]);
                     salaat.set(Calendar.HOUR_OF_DAY, hour);
                     salaat.set(Calendar.MINUTE, minute);
                     salaat.set(Calendar.SECOND, 0);
                     salaat.set(Calendar.MILLISECOND, 0);
 
-                    Log.d(LOG_TAG, "Comparing " + salaat.toString() + " to " + now.toString());
+                    Log.d(LOG_TAG, "Comparing " + salaat + " to " + now);
                     if (now.compareTo(salaat) < 0) {
-                        Log.d(LOG_TAG, "Salaat " + String.valueOf(viewId) + " is after now");
+                        Log.d(LOG_TAG, "Salaat " + viewId + " is after now");
                         found = true;
-                        switch (viewId) {
-                            case R.id.fajr_value:
-                                salaatName = "Fajr";
-                                break;
-                            case R.id.zohr_value:
-                                salaatName = "Zohr";
-                                break;
-                            case R.id.maghrib_value:
-                                salaatName = "Maghrib";
-                        }
+                        salaatName = switch (viewId) {
+                            case R.id.fajr_value -> "Fajr";
+                            case R.id.zohr_value -> "Zohr";
+                            case R.id.maghrib_value -> "Maghrib";
+                            default -> salaatName;
+                        };
                         break;
                     }
 
@@ -231,8 +222,8 @@ public class SalaatTimes {
                 try {
                     String salaatTime = entry.getSalaat(R.id.tomorrowfajr_value);
                     String[] time_split = salaatTime.split(":");
-                    int hour = Integer.valueOf(time_split[0]);
-                    int minute = Integer.valueOf(time_split[1]);
+                    int hour = Integer.parseInt(time_split[0]);
+                    int minute = Integer.parseInt(time_split[1]);
                     salaat.add(Calendar.DAY_OF_MONTH, 1);
                     salaat.set(Calendar.HOUR_OF_DAY, hour);
                     salaat.set(Calendar.MINUTE, minute);
@@ -240,13 +231,13 @@ public class SalaatTimes {
                     salaat.set(Calendar.MILLISECOND, 0);
                     if (now.compareTo(salaat) < 0) {
                         Log.w(LOG_TAG, "No salaat today is after now");
-                        salaatName = "Fajr";
                     } else {
                         Log.w(LOG_TAG, "You're set in another timezone and in fact next salaat is after tomorrow fajr");
-                        salaatName = "Fajr";
                     }
+                    salaatName = "Fajr";
 
                 } catch (Exception e) {
+                    Sentry.captureException(e);
                     Log.e(LOG_TAG, "got exception while trying to figure out next salaat", e);
                     return null;
                 }
@@ -254,6 +245,7 @@ public class SalaatTimes {
             }
             return new Salaat(salaatName, salaat, city.equals("uselocation"));
         } catch (NumberFormatException e) {
+            Sentry.captureException(e);
             return null;
         }
     }
