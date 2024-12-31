@@ -109,9 +109,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             }
         }catch(SQLiteException e){
-            Sentry.captureException(e);
-            //database does't exist yet.
-
+            //database doesn't exist yet.
         }
         catch (PackageManager.NameNotFoundException e) {
             Sentry.captureException(e);

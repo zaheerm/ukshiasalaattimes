@@ -67,13 +67,19 @@ public class NotificationPublisher extends BroadcastReceiver {
             notificationManager.createNotificationChannel(adhanChannel);
         }
     }
+    public static String capitalizeFirstLetter(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
     @Override
     public void onReceive(Context context, Intent intent) {
         // ...
         // Obtain the FirebaseAnalytics instance.
         FirebaseAnalytics mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
         String salaat_name = intent.getStringExtra(SalaatTimes.SALAAT_NAME);
-        if (salaat_name != null) salaat_name = "fajr";
+        if (salaat_name == null) salaat_name = "fajr";
         Log.i(LOG_TAG, "Received notification for " + salaat_name);
         SalaatTimes salaatTimes = SalaatTimes.build(context);
         salaatTimes.scheduleNextSalaatNotification(context);
@@ -115,7 +121,7 @@ public class NotificationPublisher extends BroadcastReceiver {
                 .setDefaults(Notification.DEFAULT_VIBRATE)
                 .setSmallIcon(R.drawable.ic_stat_kaaba)
                 .setContentTitle(salaat_name + " Salaat Time Now")
-                .setContentText("Time to pray " + salaat_name)
+                .setContentText("Time to pray " + capitalizeFirstLetter(salaat_name))
                 .setLights(Color.GREEN, 500, 500)
                 .setPriority(PRIORITY_HIGH);
 
