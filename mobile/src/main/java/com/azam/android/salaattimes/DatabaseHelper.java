@@ -100,7 +100,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
                 else {
                     version_cursor.moveToFirst();
-                    int CURRENT_VERSION = 9;
+                    int CURRENT_VERSION = 11;
                     if (version_cursor.getInt(0) < CURRENT_VERSION) {
                         recent = false;
                     }
